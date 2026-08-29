@@ -124,9 +124,17 @@ label {
   color: #293548;
 }
 
+.field-help {
+  margin-top: -2px;
+  font-size: 0.78rem;
+  line-height: 1.35;
+  color: #6a7787;
+}
+
 input[type="text"],
 input[type="email"],
 input[type="tel"],
+input[type="password"],
 input[type="date"],
 select {
   width: 100%;
