@@ -1,3 +1,5 @@
+const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form";
+
 const states = [
   ["AL", "Alabama"], ["AK", "Alaska"], ["AZ", "Arizona"], ["AR", "Arkansas"],
   ["CA", "California"], ["CO", "Colorado"], ["CT", "Connecticut"], ["DE", "Delaware"],
@@ -21,6 +23,14 @@ const submitButton = document.getElementById("submit-button");
 const statusMessage = document.getElementById("form-status");
 const cidInput = document.getElementById("cid-number");
 const ssnInput = document.getElementById("social-security-number");
+const inviteToken = new URLSearchParams(window.location.search).get("invite")?.trim() || "";
+const inviteStatus = document.createElement("div");
+
+inviteStatus.className = "invite-status";
+inviteStatus.setAttribute("role", "status");
+inviteStatus.setAttribute("aria-live", "polite");
+form.before(inviteStatus);
+form.classList.add("is-hidden");
 
 function digitsOnly(value, maxLength) {
   return value.replace(/\D/g, "").slice(0, maxLength);
@@ -31,6 +41,34 @@ function formatSsn(value) {
   if (digits.length <= 3) return digits;
   if (digits.length <= 5) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
   return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
+}
+
+function setInviteStatus(message, type = "info") {
+  inviteStatus.textContent = message;
+  inviteStatus.className = `invite-status ${type}`;
+}
+
+async function callEmploymentApi(payload) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  let data = null;
+  try {
+    data = await response.json();
+  } catch {
+    // A generic error below handles non-JSON responses.
+  }
+
+  if (!response.ok || !data?.ok) {
+    const error = new Error(data?.error || "The employment form service is temporarily unavailable. Please try again.");
+    error.status = response.status;
+    throw error;
+  }
+
+  return data;
 }
 
 function populateStateSelects() {
@@ -72,6 +110,76 @@ function refreshAddButton() {
   limitMessage.classList.toggle("is-hidden", !atLimit);
 }
 
+function collectEmploymentHistory() {
+  return Array.from(document.querySelectorAll('.experience-card[data-experience]:not(.is-hidden)')).map((card) => {
+    const number = card.dataset.experience;
+    const value = (field) => form.elements[`experience_${number}_${field}`]?.value?.trim() || "";
+
+    return {
+      business_name: value("business_name"),
+      job_title: value("job_title"),
+      start_date: value("start_date"),
+      end_date: value("end_date"),
+      reason_for_leaving: value("reason_for_leaving"),
+      business_street_address: value("business_street_address"),
+      city: value("city"),
+      state: value("state"),
+      zip_code: value("zip")
+    };
+  });
+}
+
+function buildSubmissionPayload() {
+  const formData = new FormData(form);
+
+  return {
+    action: "submit",
+    token: inviteToken,
+    first_name: String(formData.get("first_name") || "").trim(),
+    middle_name: String(formData.get("middle_name") || "").trim(),
+    last_name: String(formData.get("last_name") || "").trim(),
+    cid: String(formData.get("cid_number") || "").trim(),
+    ssn: String(formData.get("social_security_number") || "").trim(),
+    email: String(formData.get("email") || "").trim(),
+    phone: String(formData.get("employee_phone") || "").trim(),
+    street_address: String(formData.get("employee_street_address") || "").trim(),
+    address_line_2: String(formData.get("employee_address_line_2") || "").trim(),
+    city: String(formData.get("employee_city") || "").trim(),
+    state: String(formData.get("employee_state") || "").trim(),
+    zip_code: String(formData.get("employee_zip") || "").trim(),
+    employment_history: collectEmploymentHistory()
+  };
+}
+
+async function resolveInvite() {
+  if (!/^[0-9a-f]{64}$/i.test(inviteToken)) {
+    setInviteStatus("This secure employment form link is incomplete or invalid. Please contact the Avian office for a new link.", "error");
+    return;
+  }
+
+  setInviteStatus("Verifying your secure employment form link…", "info");
+
+  try {
+    const data = await callEmploymentApi({ action: "resolve", token: inviteToken });
+
+    if (data.status === "already_submitted") {
+      setInviteStatus("Your employment information has already been submitted. Please contact the Avian office if a correction is needed.", "success");
+      return;
+    }
+
+    if (data.status !== "open") {
+      setInviteStatus("This employment form is not available. Please contact the Avian office.", "error");
+      return;
+    }
+
+    const cidHint = data.cidLast4 ? ` CID ending in ${data.cidLast4}.` : "";
+    setInviteStatus(`Secure employment form for ${data.instructorName}.${cidHint} Enter your full 9-digit CID below to confirm your identity.`, "success");
+    form.classList.remove("is-hidden");
+  } catch (error) {
+    setInviteStatus(error.message, error.status === 409 ? "success" : "error");
+  }
+}
+
 addButton.addEventListener("click", () => {
   const nextCard = document.querySelector('.experience-card.is-hidden[data-experience]');
   if (!nextCard) return;
@@ -98,6 +206,10 @@ ssnInput.addEventListener("input", () => {
   ssnInput.value = formatSsn(ssnInput.value);
 });
 
+document.querySelectorAll('input[name$="_end_date"]').forEach((input) => {
+  input.max = new Date().toISOString().slice(0, 10);
+});
+
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   statusMessage.textContent = "";
@@ -106,31 +218,25 @@ form.addEventListener("submit", async (event) => {
   if (!form.reportValidity()) return;
 
   submitButton.disabled = true;
-  submitButton.textContent = "Submitting...";
+  submitButton.textContent = "Submitting securely...";
 
   try {
-    const formData = new FormData(form);
-    const response = await fetch("/", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams(formData).toString()
-    });
+    await callEmploymentApi(buildSubmissionPayload());
 
-    if (!response.ok) throw new Error("Submission failed");
-
-    statusMessage.textContent = "Thank you. Your employment history was submitted successfully.";
+    statusMessage.textContent = "Thank you. Your employment information was submitted successfully.";
     statusMessage.classList.add("success");
+    setInviteStatus("Submission complete. Your employment information is now connected to your Avian instructor profile.", "success");
     form.reset();
-
-    document.querySelectorAll('.experience-card[data-experience]:not([data-experience="1"])').forEach((card) => {
-      setCardActive(card, false);
-    });
-
-    refreshAddButton();
+    form.classList.add("is-hidden");
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (error) {
-    statusMessage.textContent = "Something went wrong while submitting the form. Please try again.";
+    statusMessage.textContent = error.message;
     statusMessage.classList.add("error");
+
+    if (error.status === 409) {
+      setInviteStatus("Your employment information has already been submitted. Please contact the Avian office if a correction is needed.", "success");
+      form.classList.add("is-hidden");
+    }
   } finally {
     submitButton.disabled = false;
     submitButton.textContent = "Submit Employment History";
@@ -139,3 +245,4 @@ form.addEventListener("submit", async (event) => {
 
 populateStateSelects();
 refreshAddButton();
+resolveInvite();
