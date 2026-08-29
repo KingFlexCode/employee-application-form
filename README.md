@@ -61,7 +61,7 @@ Full Social Security Number data is stored separately from the normal instructor
 
 ## Deploy on Netlify
 
-This repository can be deployed as a static site with no build command.
+This repository is deployed as a static site with no build command.
 
 - Build command: leave blank
 - Publish directory: `.`
@@ -76,7 +76,7 @@ Opening the site without a valid invitation token intentionally prevents the for
 
 ## Netlify Forms
 
-The older prototype markup still contains Netlify form attributes for compatibility, but JavaScript intercepts the submit event and sends the completed form directly to the Avian Supabase Edge Function. Netlify Forms is not the source of truth and email form notifications should remain disabled because the form contains sensitive employee information.
+Netlify is only the static host for this application. The HTML does **not** opt into Netlify Forms, and the completed form is never intentionally posted to Netlify. The page’s JavaScript submits directly to the Avian Supabase Edge Function. The form also includes a no-network inline submit fallback so a missing external script does not cause the browser to POST sensitive fields to the static host.
 
 ## Future Avian Platform integration
 
