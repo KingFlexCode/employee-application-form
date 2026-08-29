@@ -5,7 +5,9 @@ A simple static HTML/CSS/JavaScript form designed for Netlify Forms.
 ## What it does
 
 - Collects employee first name, middle name, last name, CID number, Social Security Number, home address, email, and phone.
-- Collects up to 5 employment-history entries.
+- Collects complete employment history covering the past 5 years, with the current or most recent employer listed first.
+- Allows up to 5 structured employer entries in the current prototype. If an employee had more than 5 employers during the past 5 years, the form instructs them to contact the office so the remaining history can also be collected.
+- If an employment period began more than 5 years ago but continued into the last 5 years, the employee should enter the actual start date.
 - Captures the fields shown in the reference application:
   - Business Name
   - Job Title / Description
