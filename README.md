@@ -47,7 +47,7 @@ Each previous employer includes:
 - State
 - 5-digit ZIP Code
 
-The current prototype supports up to 5 structured previous-employer records.
+The form supports up to 20 previous-employer records so the requirement means **five years of history**, not a five-job limit. If an employee needs more than 20 records to cover the five-year period, they are instructed to contact the office.
 
 ## Secure submission
 
