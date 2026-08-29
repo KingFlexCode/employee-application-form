@@ -75,6 +75,30 @@ h2 {
 
 form { padding: 30px 36px 38px; }
 
+.invite-status {
+  margin: 24px 36px 0;
+  padding: 14px 16px;
+  border: 1px solid #dce5ec;
+  border-radius: 10px;
+  background: #f7fafc;
+  color: #536273;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.invite-status.success {
+  border-color: #b9dfca;
+  background: #eef9f3;
+  color: #176b45;
+}
+
+.invite-status.error {
+  border-color: #efc7cc;
+  background: #fff5f6;
+  color: #b42333;
+}
+
 .employee-grid,
 .fields-grid {
   display: grid;
@@ -275,6 +299,11 @@ select:disabled {
 
   .form-header,
   form { padding-left: 20px; padding-right: 20px; }
+
+  .invite-status {
+    margin-left: 20px;
+    margin-right: 20px;
+  }
 
   .employee-grid,
   .fields-grid { grid-template-columns: 1fr; }

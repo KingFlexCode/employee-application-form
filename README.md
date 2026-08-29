@@ -1,48 +1,83 @@
-# Employee Employment History Form
+# Avian Employee Employment History Form
 
-A simple static HTML/CSS/JavaScript form designed for Netlify Forms.
+A simple static HTML/CSS/JavaScript form hosted separately from the Avian staff applications. The public page is designed to be shared with current instructors through a secure one-time invitation link.
 
-## What it does
+## Current workflow
 
-- Collects employee first name, middle name, last name, CID number, Social Security Number, home address, email, and phone in a dedicated Personal Information section.
-- Collects complete **previous** employment history covering the past 5 years, beginning with the employee's most recent previous employer.
-- Does not ask for the employee's current Avian Driving School employment and does not include a "currently work here" option.
-- Allows up to 5 structured employer entries in the current prototype. If an employee had more than 5 previous employers during the past 5 years, the form instructs them to contact the office so the remaining history can also be collected.
-- If a previous employment period began more than 5 years ago but continued into the last 5 years, the employee should enter the actual start date.
-- Captures the following for each previous employer:
-  - Business Name
-  - Job Title / Description
-  - Start Date
-  - End Date
-  - Reason for Leaving
-  - Business Street Address
-  - City
-  - State
-  - 5-Digit ZIP Code
-- Saves verified submissions in Netlify Forms.
-- Supports Netlify form submissions; do not enable ordinary email delivery while the form contains a full Social Security Number field.
-- Includes basic bot protection with a honeypot field.
+1. Office opens an instructor profile in the Avian Student Record Card app.
+2. The instructor must have a unique 9-digit CID.
+3. Office generates a secure employment-form invitation link.
+4. The instructor opens this standalone form with the `?invite=...` token in the URL.
+5. The form verifies the invitation with the Avian Student Record Card Supabase backend.
+6. The instructor enters their full 9-digit CID to confirm the invitation belongs to them.
+7. The completed form is submitted directly to the controlled Supabase Edge Function.
+8. Supabase attaches the submission to the permanent instructor directory profile.
+9. The invitation becomes used and the database prevents a second completed application for the same instructor.
+
+## What the form collects
+
+### Personal Information
+
+- First Name
+- Middle Name
+- Last Name
+- 9-digit CID
+- Social Security Number
+- Email
+- Phone
+- Street Address
+- Apartment / Unit
+- City
+- State
+- 5-digit ZIP Code
+
+### Previous Employment History — Past 5 Years
+
+The employee must provide complete previous employment history covering the past 5 years, with the most recent previous employer first. Avian Driving School is not included as the current employer.
+
+Each previous employer includes:
+
+- Business Name
+- Job Title / Description
+- Start Date
+- End Date
+- Reason for Leaving
+- Business Street Address
+- City
+- State
+- 5-digit ZIP Code
+
+The form supports up to 20 previous-employer records so the requirement means **five years of history**, not a five-job limit. If an employee needs more than 20 records to cover the five-year period, they are instructed to contact the office.
+
+## Secure submission
+
+The browser submits JSON to:
+
+`https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form`
+
+The public browser does **not** receive a Supabase service-role key and does not receive direct access to the instructor directory or employment tables. The high-entropy invitation token and matching instructor CID are verified by the backend before a submission is accepted.
+
+Full Social Security Number data is stored separately from the normal instructor-profile data. The standard Office instructor profile only receives the last four digits for confirmation. Do not enable ordinary email notifications for completed forms.
 
 ## Deploy on Netlify
 
-1. Sign in to Netlify.
-2. Create a new site and deploy this folder, or connect a GitHub repository containing these files.
-3. In Netlify, make sure form detection is enabled.
-4. After the first deploy, submit one test form.
-5. Go to your site's Forms area to confirm `employee-employment-history` is being detected.
-6. Because this version contains a full Social Security Number field, do not enable ordinary form-submission email notifications. Use a restricted secure storage/review workflow before collecting real SSNs.
+This repository is deployed as a static site with no build command.
 
-## Google Drive / Word document option
+- Build command: leave blank
+- Publish directory: `.`
 
-For non-sensitive prototypes, Netlify Forms can be used for testing. Once full SSNs are collected, use a restricted secure storage workflow rather than ordinary email.
+After deployment, use the Netlify site URL as the **Public employment form URL** in the instructor profile. Avian then appends the one-time invitation token automatically.
 
-If you later want every submission automatically saved to Google Drive, connect the form to an approved secure workflow and create either:
+A valid shared link looks like:
 
-- a Google Docs document for each employee, or
-- a Google Sheets row for each submission.
+`https://your-site.netlify.app/?invite=<secure-token>`
 
-Google Sheets is usually easier to review and search than individual Word documents, but sensitive fields such as full SSNs should not be placed into an ordinary broadly shared Sheet or email workflow.
+Opening the site without a valid invitation token intentionally prevents the form from being used.
 
-## Sensitive information note
+## Netlify Forms
 
-This form includes a full Social Security Number field. Do **not** rely on ordinary email notifications for completed submissions that contain a full SSN. Before using this form for real employee SSNs, move sensitive-field storage and review to an appropriately secured backend/workflow with restricted access. The standalone Netlify form should be treated as a prototype until that secure handling is in place.
+Netlify is only the static host for this application. The HTML does **not** opt into Netlify Forms, and the completed form is never intentionally posted to Netlify. The page’s JavaScript submits directly to the Avian Supabase Edge Function. The form also includes a no-network inline submit fallback so a missing external script does not cause the browser to POST sensitive fields to the static host.
+
+## Future Avian Platform integration
+
+The Student Record Card app is the current source of truth for instructor employment submissions because it already owns the permanent instructor directory. EST-147 tracks the later general Employee model for instructors, secretaries, managers, supervisors, and other staff when this functionality is consolidated into the larger Avian Platform.

@@ -18,25 +18,7 @@
         </p>
       </header>
 
-      <form
-        id="employment-form"
-        name="employee-employment-history"
-        method="POST"
-        data-netlify="true"
-        data-netlify-honeypot="bot-field"
-      >
-        <input type="hidden" name="form-name" value="employee-employment-history" />
-        <input
-          type="hidden"
-          name="subject"
-          data-remove-prefix
-          value="New Employee Employment History Submission"
-        />
-
-        <p class="honeypot" aria-hidden="true">
-          <label>Do not fill this out: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
-        </p>
-
+      <form id="employment-form" action="/form-disabled" method="POST" onsubmit="return false;">
         <section class="employee-grid" aria-labelledby="personal-information-heading">
           <h2 id="personal-information-heading">Personal Information</h2>
           <p class="section-description full-width">
@@ -158,7 +140,7 @@
           </p>
 
           <div id="experience-list">
-            <!-- Experience 1 is visible by default. Experiences 2-5 are pre-rendered for Netlify form detection. -->
+            <!-- Experience 1 is visible by default. Experiences 2-5 stay available for additional previous employers. -->
 
             <section class="experience-card" data-experience="1">
               <div class="experience-heading">
