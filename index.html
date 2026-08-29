@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employment History Form</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="page-shell">
+    <section class="form-card">
+      <header class="form-header">
+        <p class="eyebrow">Employee Information</p>
+        <h1>Employment History</h1>
+        <p class="intro">
+          Please list your employment experience for the last 5 years, starting with your most recent employer.
+          Fields marked with <span class="required">*</span> are required.
+        </p>
+      </header>
+
+      <form
+        id="employment-form"
+        name="employee-employment-history"
+        method="POST"
+        data-netlify="true"
+        data-netlify-honeypot="bot-field"
+      >
+        <input type="hidden" name="form-name" value="employee-employment-history" />
+        <input
+          type="hidden"
+          name="subject"
+          data-remove-prefix
+          value="New Employee Employment History Submission"
+        />
+
+        <p class="honeypot" aria-hidden="true">
+          <label>Do not fill this out: <input name="bot-field" tabindex="-1" autocomplete="off" /></label>
+        </p>
+
+        <section class="employee-grid" aria-labelledby="employee-heading">
+          <h2 id="employee-heading">Employee Details</h2>
+
+          <div class="field full-width">
+            <label for="employee-name">Employee Full Name <span class="required">*</span></label>
+            <input id="employee-name" name="employee_name" type="text" autocomplete="name" required />
+          </div>
+
+          <div class="field">
+            <label for="employee-email">Email Address <span class="required">*</span></label>
+            <input id="employee-email" name="email" type="email" autocomplete="email" required />
+          </div>
+
+          <div class="field">
+            <label for="employee-phone">Phone Number</label>
+            <input id="employee-phone" name="employee_phone" type="tel" autocomplete="tel" />
+          </div>
+        </section>
+
+        <div id="experience-list">
+          <!-- Experience 1 is visible by default. Experiences 2-5 are pre-rendered for Netlify form detection. -->
+
+          <section class="experience-card" data-experience="1">
+            <div class="experience-heading">
+              <div>
+                <span class="step-label">Most Recent</span>
+                <h2>Employment Experience 1</h2>
+              </div>
+            </div>
+
+            <div class="fields-grid">
+              <div class="field">
+                <label for="business-name-1">Business Name <span class="required">*</span></label>
+                <input id="business-name-1" name="experience_1_business_name" type="text" required />
+              </div>
+
+              <div class="field">
+                <label for="job-title-1">Job Title / Description <span class="required">*</span></label>
+                <input id="job-title-1" name="experience_1_job_title" type="text" required />
+              </div>
+
+              <div class="field">
+                <label for="start-date-1">Start Date <span class="required">*</span></label>
+                <input id="start-date-1" name="experience_1_start_date" type="date" required />
+              </div>
+
+              <div class="field end-date-field">
+                <label for="end-date-1">End Date <span class="required">*</span></label>
+                <input id="end-date-1" name="experience_1_end_date" type="date" required />
+                <label class="checkbox-row">
+                  <input type="checkbox" class="current-job-toggle" data-target="1" name="experience_1_current_job" value="Yes" />
+                  <span>I currently work here</span>
+                </label>
+              </div>
+
+              <div class="field full-width reason-field">
+                <label for="reason-leaving-1">Reason for Leaving <span class="required">*</span></label>
+                <input id="reason-leaving-1" name="experience_1_reason_for_leaving" type="text" required />
+              </div>
+
+              <div class="field full-width">
+                <label for="street-1">Business Street Address <span class="required">*</span></label>
+                <input id="street-1" name="experience_1_business_street_address" type="text" autocomplete="street-address" required />
+              </div>
+
+              <div class="field">
+                <label for="city-1">City <span class="required">*</span></label>
+                <input id="city-1" name="experience_1_city" type="text" required />
+              </div>
+
+              <div class="field">
+                <label for="state-1">State <span class="required">*</span></label>
+                <select id="state-1" name="experience_1_state" required>
+                  <option value="">Select state</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label for="zip-1">5-Digit ZIP Code <span class="required">*</span></label>
+                <input id="zip-1" name="experience_1_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" required />
+              </div>
+            </div>
+          </section>
+
+          <section class="experience-card is-hidden" data-experience="2" aria-hidden="true">
+            <div class="experience-heading">
+              <h2>Employment Experience 2</h2>
+              <button class="remove-button" type="button" data-remove="2">Remove</button>
+            </div>
+            <div class="fields-grid">
+              <div class="field"><label for="business-name-2">Business Name <span class="required">*</span></label><input id="business-name-2" name="experience_2_business_name" type="text" disabled /></div>
+              <div class="field"><label for="job-title-2">Job Title / Description <span class="required">*</span></label><input id="job-title-2" name="experience_2_job_title" type="text" disabled /></div>
+              <div class="field"><label for="start-date-2">Start Date <span class="required">*</span></label><input id="start-date-2" name="experience_2_start_date" type="date" disabled /></div>
+              <div class="field end-date-field"><label for="end-date-2">End Date <span class="required">*</span></label><input id="end-date-2" name="experience_2_end_date" type="date" disabled /><label class="checkbox-row"><input type="checkbox" class="current-job-toggle" data-target="2" name="experience_2_current_job" value="Yes" disabled /><span>I currently work here</span></label></div>
+              <div class="field full-width reason-field"><label for="reason-leaving-2">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-2" name="experience_2_reason_for_leaving" type="text" disabled /></div>
+              <div class="field full-width"><label for="street-2">Business Street Address <span class="required">*</span></label><input id="street-2" name="experience_2_business_street_address" type="text" disabled /></div>
+              <div class="field"><label for="city-2">City <span class="required">*</span></label><input id="city-2" name="experience_2_city" type="text" disabled /></div>
+              <div class="field"><label for="state-2">State <span class="required">*</span></label><select id="state-2" name="experience_2_state" disabled><option value="">Select state</option></select></div>
+              <div class="field"><label for="zip-2">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-2" name="experience_2_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
+            </div>
+          </section>
+
+          <section class="experience-card is-hidden" data-experience="3" aria-hidden="true">
+            <div class="experience-heading"><h2>Employment Experience 3</h2><button class="remove-button" type="button" data-remove="3">Remove</button></div>
+            <div class="fields-grid">
+              <div class="field"><label for="business-name-3">Business Name <span class="required">*</span></label><input id="business-name-3" name="experience_3_business_name" type="text" disabled /></div>
+              <div class="field"><label for="job-title-3">Job Title / Description <span class="required">*</span></label><input id="job-title-3" name="experience_3_job_title" type="text" disabled /></div>
+              <div class="field"><label for="start-date-3">Start Date <span class="required">*</span></label><input id="start-date-3" name="experience_3_start_date" type="date" disabled /></div>
+              <div class="field end-date-field"><label for="end-date-3">End Date <span class="required">*</span></label><input id="end-date-3" name="experience_3_end_date" type="date" disabled /><label class="checkbox-row"><input type="checkbox" class="current-job-toggle" data-target="3" name="experience_3_current_job" value="Yes" disabled /><span>I currently work here</span></label></div>
+              <div class="field full-width reason-field"><label for="reason-leaving-3">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-3" name="experience_3_reason_for_leaving" type="text" disabled /></div>
+              <div class="field full-width"><label for="street-3">Business Street Address <span class="required">*</span></label><input id="street-3" name="experience_3_business_street_address" type="text" disabled /></div>
+              <div class="field"><label for="city-3">City <span class="required">*</span></label><input id="city-3" name="experience_3_city" type="text" disabled /></div>
+              <div class="field"><label for="state-3">State <span class="required">*</span></label><select id="state-3" name="experience_3_state" disabled><option value="">Select state</option></select></div>
+              <div class="field"><label for="zip-3">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-3" name="experience_3_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
+            </div>
+          </section>
+
+          <section class="experience-card is-hidden" data-experience="4" aria-hidden="true">
+            <div class="experience-heading"><h2>Employment Experience 4</h2><button class="remove-button" type="button" data-remove="4">Remove</button></div>
+            <div class="fields-grid">
+              <div class="field"><label for="business-name-4">Business Name <span class="required">*</span></label><input id="business-name-4" name="experience_4_business_name" type="text" disabled /></div>
+              <div class="field"><label for="job-title-4">Job Title / Description <span class="required">*</span></label><input id="job-title-4" name="experience_4_job_title" type="text" disabled /></div>
+              <div class="field"><label for="start-date-4">Start Date <span class="required">*</span></label><input id="start-date-4" name="experience_4_start_date" type="date" disabled /></div>
+              <div class="field end-date-field"><label for="end-date-4">End Date <span class="required">*</span></label><input id="end-date-4" name="experience_4_end_date" type="date" disabled /><label class="checkbox-row"><input type="checkbox" class="current-job-toggle" data-target="4" name="experience_4_current_job" value="Yes" disabled /><span>I currently work here</span></label></div>
+              <div class="field full-width reason-field"><label for="reason-leaving-4">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-4" name="experience_4_reason_for_leaving" type="text" disabled /></div>
+              <div class="field full-width"><label for="street-4">Business Street Address <span class="required">*</span></label><input id="street-4" name="experience_4_business_street_address" type="text" disabled /></div>
+              <div class="field"><label for="city-4">City <span class="required">*</span></label><input id="city-4" name="experience_4_city" type="text" disabled /></div>
+              <div class="field"><label for="state-4">State <span class="required">*</span></label><select id="state-4" name="experience_4_state" disabled><option value="">Select state</option></select></div>
+              <div class="field"><label for="zip-4">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-4" name="experience_4_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
+            </div>
+          </section>
+
+          <section class="experience-card is-hidden" data-experience="5" aria-hidden="true">
+            <div class="experience-heading"><h2>Employment Experience 5</h2><button class="remove-button" type="button" data-remove="5">Remove</button></div>
+            <div class="fields-grid">
+              <div class="field"><label for="business-name-5">Business Name <span class="required">*</span></label><input id="business-name-5" name="experience_5_business_name" type="text" disabled /></div>
+              <div class="field"><label for="job-title-5">Job Title / Description <span class="required">*</span></label><input id="job-title-5" name="experience_5_job_title" type="text" disabled /></div>
+              <div class="field"><label for="start-date-5">Start Date <span class="required">*</span></label><input id="start-date-5" name="experience_5_start_date" type="date" disabled /></div>
+              <div class="field end-date-field"><label for="end-date-5">End Date <span class="required">*</span></label><input id="end-date-5" name="experience_5_end_date" type="date" disabled /><label class="checkbox-row"><input type="checkbox" class="current-job-toggle" data-target="5" name="experience_5_current_job" value="Yes" disabled /><span>I currently work here</span></label></div>
+              <div class="field full-width reason-field"><label for="reason-leaving-5">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-5" name="experience_5_reason_for_leaving" type="text" disabled /></div>
+              <div class="field full-width"><label for="street-5">Business Street Address <span class="required">*</span></label><input id="street-5" name="experience_5_business_street_address" type="text" disabled /></div>
+              <div class="field"><label for="city-5">City <span class="required">*</span></label><input id="city-5" name="experience_5_city" type="text" disabled /></div>
+              <div class="field"><label for="state-5">State <span class="required">*</span></label><select id="state-5" name="experience_5_state" disabled><option value="">Select state</option></select></div>
+              <div class="field"><label for="zip-5">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-5" name="experience_5_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
+            </div>
+          </section>
+        </div>
+
+        <div class="experience-actions">
+          <button id="add-experience" class="secondary-button" type="button">+ Add Another Employer</button>
+          <p id="experience-limit" class="limit-message is-hidden">Maximum of 5 employment entries reached.</p>
+        </div>
+
+        <section class="confirmation-box">
+          <label class="checkbox-row confirmation-check">
+            <input type="checkbox" name="information_certified" value="Yes" required />
+            <span>I certify that the information provided above is complete and accurate to the best of my knowledge. <span class="required">*</span></span>
+          </label>
+        </section>
+
+        <div id="form-status" class="form-status" role="status" aria-live="polite"></div>
+
+        <button id="submit-button" class="submit-button" type="submit">Submit Employment History</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
