@@ -14,7 +14,9 @@ const states = [
   ["WV", "West Virginia"], ["WI", "Wisconsin"], ["WY", "Wyoming"]
 ];
 
+const MAX_EXPERIENCE_ENTRIES = 5;
 const form = document.getElementById("employment-form");
+const experienceList = document.getElementById("experience-list");
 const addButton = document.getElementById("add-experience");
 const limitMessage = document.getElementById("experience-limit");
 const submitButton = document.getElementById("submit-button");
@@ -33,8 +35,42 @@ function formatSsn(value) {
   return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
 }
 
+function updateEmploymentHistoryCopy() {
+  const headerIntro = document.querySelector(".form-header .intro");
+  if (headerIntro) {
+    headerIntro.innerHTML =
+      'Please provide your <strong>complete employment history covering the past 5 years</strong>, starting with your current or most recent employer. Include every employer you worked for during that 5-year period. If a job started more than 5 years ago but continued into the last 5 years, enter the actual start date. Fields marked with <span class="required">*</span> are required.';
+  }
+
+  if (experienceList && !document.getElementById("employment-history-heading")) {
+    const heading = document.createElement("h2");
+    heading.id = "employment-history-heading";
+    heading.textContent = "Employment History — Past 5 Years";
+
+    const instructions = document.createElement("p");
+    instructions.className = "intro";
+    instructions.textContent =
+      "List every employer needed to cover your employment history for the past 5 years, with the most recent employer first. Use ‘Add Another Employer’ until all employers from that period have been included.";
+
+    experienceList.before(heading, instructions);
+  }
+
+  if (limitMessage) {
+    limitMessage.textContent =
+      `Maximum of ${MAX_EXPERIENCE_ENTRIES} employment entries reached. If more are needed to cover the past 5 years, contact the office.`;
+  }
+
+  const certificationText = document.querySelector(".confirmation-check span");
+  if (certificationText) {
+    certificationText.innerHTML =
+      'I certify that I have listed all employers from the past 5 years and that the information provided above is complete and accurate to the best of my knowledge. <span class="required">*</span>';
+  }
+}
+
 function populateStateSelects() {
   document.querySelectorAll('select[name$="_state"]').forEach((select) => {
+    if (select.options.length > 1) return;
+
     states.forEach(([abbr, name]) => {
       const option = document.createElement("option");
       option.value = abbr;
@@ -74,45 +110,47 @@ function refreshAddButton() {
   limitMessage.classList.toggle("is-hidden", !atLimit);
 }
 
-addButton.addEventListener("click", () => {
-  const nextCard = document.querySelector('.experience-card.is-hidden[data-experience]');
-  if (!nextCard) return;
-  setCardActive(nextCard, true);
-  refreshAddButton();
-  nextCard.scrollIntoView({ behavior: "smooth", block: "start" });
-});
-
-document.querySelectorAll("[data-remove]").forEach((button) => {
-  button.addEventListener("click", () => {
-    const number = button.dataset.remove;
-    const card = document.querySelector(`[data-experience="${number}"]`);
-    setCardActive(card, false);
+function bindExperienceEvents() {
+  addButton.addEventListener("click", () => {
+    const nextCard = document.querySelector('.experience-card.is-hidden[data-experience]');
+    if (!nextCard) return;
+    setCardActive(nextCard, true);
     refreshAddButton();
+    nextCard.scrollIntoView({ behavior: "smooth", block: "start" });
   });
-});
 
-document.querySelectorAll(".current-job-toggle").forEach((checkbox) => {
-  checkbox.addEventListener("change", () => {
-    const number = checkbox.dataset.target;
-    const endDate = document.getElementById(`end-date-${number}`);
-    const reason = document.getElementById(`reason-leaving-${number}`);
-
-    if (checkbox.checked) {
-      endDate.value = "";
-      endDate.disabled = true;
-      endDate.required = false;
-      reason.value = "Currently employed";
-      reason.disabled = true;
-      reason.required = false;
-    } else {
-      endDate.disabled = false;
-      endDate.required = true;
-      reason.disabled = false;
-      reason.required = true;
-      if (reason.value === "Currently employed") reason.value = "";
-    }
+  document.querySelectorAll("[data-remove]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const number = button.dataset.remove;
+      const card = document.querySelector(`[data-experience="${number}"]`);
+      setCardActive(card, false);
+      refreshAddButton();
+    });
   });
-});
+
+  document.querySelectorAll(".current-job-toggle").forEach((checkbox) => {
+    checkbox.addEventListener("change", () => {
+      const number = checkbox.dataset.target;
+      const endDate = document.getElementById(`end-date-${number}`);
+      const reason = document.getElementById(`reason-leaving-${number}`);
+
+      if (checkbox.checked) {
+        endDate.value = "";
+        endDate.disabled = true;
+        endDate.required = false;
+        reason.value = "Currently employed";
+        reason.disabled = true;
+        reason.required = false;
+      } else {
+        endDate.disabled = false;
+        endDate.required = true;
+        reason.disabled = false;
+        reason.required = true;
+        if (reason.value === "Currently employed") reason.value = "";
+      }
+    });
+  });
+}
 
 cidInput.addEventListener("input", () => {
   cidInput.value = digitsOnly(cidInput.value, 9);
@@ -167,5 +205,7 @@ form.addEventListener("submit", async (event) => {
   }
 });
 
+updateEmploymentHistoryCopy();
 populateStateSelects();
+bindExperienceEvents();
 refreshAddButton();
