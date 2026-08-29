@@ -19,6 +19,19 @@ const addButton = document.getElementById("add-experience");
 const limitMessage = document.getElementById("experience-limit");
 const submitButton = document.getElementById("submit-button");
 const statusMessage = document.getElementById("form-status");
+const cidInput = document.getElementById("cid-number");
+const ssnInput = document.getElementById("social-security-number");
+
+function digitsOnly(value, maxLength) {
+  return value.replace(/\D/g, "").slice(0, maxLength);
+}
+
+function formatSsn(value) {
+  const digits = digitsOnly(value, 9);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 5) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+  return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
+}
 
 function populateStateSelects() {
   document.querySelectorAll('select[name$="_state"]').forEach((select) => {
@@ -99,6 +112,14 @@ document.querySelectorAll(".current-job-toggle").forEach((checkbox) => {
       if (reason.value === "Currently employed") reason.value = "";
     }
   });
+});
+
+cidInput.addEventListener("input", () => {
+  cidInput.value = digitsOnly(cidInput.value, 9);
+});
+
+ssnInput.addEventListener("input", () => {
+  ssnInput.value = formatSsn(ssnInput.value);
 });
 
 form.addEventListener("submit", async (event) => {
