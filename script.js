@@ -1,5 +1,7 @@
-const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form";
+const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2";
 const MAX_EXPERIENCE_ENTRIES = 20;
+const MAX_IDENTITY_DOCUMENT_BYTES = 8 * 1024 * 1024;
+const ALLOWED_IDENTITY_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 const states = [
   ["AL", "Alabama"], ["AK", "Alaska"], ["AZ", "Arizona"], ["AR", "Arkansas"],
@@ -25,6 +27,8 @@ const submitButton = document.getElementById("submit-button");
 const statusMessage = document.getElementById("form-status");
 const cidInput = document.getElementById("cid-number");
 const ssnInput = document.getElementById("social-security-number");
+const identityDocumentInput = document.getElementById("identity-document");
+const identityDocumentSelected = document.getElementById("identity-document-selected");
 const inviteToken = new URLSearchParams(window.location.search).get("invite")?.trim() || "";
 const inviteStatus = document.createElement("div");
 
@@ -45,18 +49,17 @@ function formatSsn(value) {
   return `${digits.slice(0, 3)}-${digits.slice(3, 5)}-${digits.slice(5)}`;
 }
 
+function formatFileSize(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 function setInviteStatus(message, type = "info") {
   inviteStatus.textContent = message;
   inviteStatus.className = `invite-status ${type}`;
 }
 
-async function callEmploymentApi(payload) {
-  const response = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
-
+async function readJsonResponse(response) {
   let data = null;
   try {
     data = await response.json();
@@ -71,6 +74,29 @@ async function callEmploymentApi(payload) {
   }
 
   return data;
+}
+
+async function callEmploymentApi(payload) {
+  const response = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  return readJsonResponse(response);
+}
+
+async function submitEmploymentApplication(payload, identityDocument) {
+  const requestBody = new FormData();
+  requestBody.append("payload", JSON.stringify(payload));
+  requestBody.append("identity_document", identityDocument, identityDocument.name);
+
+  const response = await fetch(API_URL, {
+    method: "POST",
+    body: requestBody
+  });
+
+  return readJsonResponse(response);
 }
 
 function populateStateSelect(select) {
@@ -177,12 +203,36 @@ function collectEmploymentHistory() {
   });
 }
 
+function validateIdentityDocument() {
+  const file = identityDocumentInput.files?.[0] || null;
+
+  if (!file) {
+    identityDocumentInput.setCustomValidity("Upload a clear image of the front of your driver license.");
+    throw new Error("Upload a clear image of the front of your driver license.");
+  }
+
+  if (!ALLOWED_IDENTITY_MIME_TYPES.has(file.type)) {
+    identityDocumentInput.setCustomValidity("Upload a JPEG, PNG, or WebP image.");
+    throw new Error("Upload a JPEG, PNG, or WebP image of your driver license.");
+  }
+
+  if (file.size <= 0 || file.size > MAX_IDENTITY_DOCUMENT_BYTES) {
+    identityDocumentInput.setCustomValidity("Driver license image must be 8 MB or smaller.");
+    throw new Error("Driver license image must be 8 MB or smaller.");
+  }
+
+  identityDocumentInput.setCustomValidity("");
+  return file;
+}
+
 function buildSubmissionPayload() {
   const formData = new FormData(form);
 
   return {
     action: "submit",
     token: inviteToken,
+    employee_role: "instructor",
+    document_type: "driver_license",
     first_name: String(formData.get("first_name") || "").trim(),
     middle_name: String(formData.get("middle_name") || "").trim(),
     last_name: String(formData.get("last_name") || "").trim(),
@@ -259,6 +309,25 @@ ssnInput.addEventListener("input", () => {
   ssnInput.value = formatSsn(ssnInput.value);
 });
 
+identityDocumentInput.addEventListener("change", () => {
+  identityDocumentInput.setCustomValidity("");
+  const file = identityDocumentInput.files?.[0] || null;
+
+  if (!file) {
+    identityDocumentSelected.textContent = "No file selected.";
+    return;
+  }
+
+  try {
+    validateIdentityDocument();
+    identityDocumentSelected.textContent = `${file.name} · ${formatFileSize(file.size)}`;
+    identityDocumentSelected.className = "identity-file-selected success";
+  } catch (error) {
+    identityDocumentSelected.textContent = error.message;
+    identityDocumentSelected.className = "identity-file-selected error";
+  }
+});
+
 document.querySelectorAll('input[name$="_end_date"]').forEach(setEndDateMax);
 
 form.addEventListener("submit", async (event) => {
@@ -266,18 +335,30 @@ form.addEventListener("submit", async (event) => {
   statusMessage.textContent = "";
   statusMessage.className = "form-status";
 
+  let identityDocument;
+  try {
+    identityDocument = validateIdentityDocument();
+  } catch (error) {
+    statusMessage.textContent = error.message;
+    statusMessage.classList.add("error");
+    identityDocumentInput.reportValidity();
+    return;
+  }
+
   if (!form.reportValidity()) return;
 
   submitButton.disabled = true;
   submitButton.textContent = "Submitting securely...";
 
   try {
-    await callEmploymentApi(buildSubmissionPayload());
+    await submitEmploymentApplication(buildSubmissionPayload(), identityDocument);
 
-    statusMessage.textContent = "Thank you. Your employment information was submitted successfully.";
+    statusMessage.textContent = "Thank you. Your employment information and driver license were submitted successfully.";
     statusMessage.classList.add("success");
-    setInviteStatus("Submission complete. Your employment information is now connected to your Avian instructor profile.", "success");
+    setInviteStatus("Submission complete. Your employment information and driver license are now connected to your Avian instructor profile for Office review.", "success");
     form.reset();
+    identityDocumentSelected.textContent = "No file selected.";
+    identityDocumentSelected.className = "identity-file-selected";
     form.classList.add("is-hidden");
     window.scrollTo({ top: 0, behavior: "smooth" });
   } catch (error) {
@@ -290,7 +371,7 @@ form.addEventListener("submit", async (event) => {
     }
   } finally {
     submitButton.disabled = false;
-    submitButton.textContent = "Submit Employment History";
+    submitButton.textContent = "Submit Employment Information";
   }
 });
 

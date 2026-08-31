@@ -13,7 +13,7 @@
         <p class="eyebrow">Avian Driving School</p>
         <h1>Employee Employment History Form</h1>
         <p class="intro">
-          Please complete the personal information and previous employment history requested below.
+          Please complete the personal information, previous employment history, and identity document requested below.
           Fields marked with <span class="required">*</span> are required.
         </p>
       </header>
@@ -140,8 +140,6 @@
           </p>
 
           <div id="experience-list">
-            <!-- Experience 1 is visible by default. Experiences 2-5 stay available for additional previous employers. -->
-
             <section class="experience-card" data-experience="1">
               <div class="experience-heading">
                 <div>
@@ -189,71 +187,33 @@
                 </div>
               </div>
             </section>
-
-            <section class="experience-card is-hidden" data-experience="2" aria-hidden="true">
-              <div class="experience-heading"><h2>Employment Experience 2</h2><button class="remove-button" type="button" data-remove="2">Remove</button></div>
-              <div class="fields-grid">
-                <div class="field"><label for="business-name-2">Business Name <span class="required">*</span></label><input id="business-name-2" name="experience_2_business_name" type="text" disabled /></div>
-                <div class="field"><label for="job-title-2">Job Title / Description <span class="required">*</span></label><input id="job-title-2" name="experience_2_job_title" type="text" disabled /></div>
-                <div class="field"><label for="start-date-2">Start Date <span class="required">*</span></label><input id="start-date-2" name="experience_2_start_date" type="date" disabled /></div>
-                <div class="field"><label for="end-date-2">End Date <span class="required">*</span></label><input id="end-date-2" name="experience_2_end_date" type="date" disabled /></div>
-                <div class="field full-width"><label for="reason-leaving-2">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-2" name="experience_2_reason_for_leaving" type="text" disabled /></div>
-                <div class="field full-width"><label for="street-2">Business Street Address <span class="required">*</span></label><input id="street-2" name="experience_2_business_street_address" type="text" disabled /></div>
-                <div class="field"><label for="city-2">City <span class="required">*</span></label><input id="city-2" name="experience_2_city" type="text" disabled /></div>
-                <div class="field"><label for="state-2">State <span class="required">*</span></label><select id="state-2" name="experience_2_state" disabled><option value="">Select state</option></select></div>
-                <div class="field"><label for="zip-2">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-2" name="experience_2_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
-              </div>
-            </section>
-
-            <section class="experience-card is-hidden" data-experience="3" aria-hidden="true">
-              <div class="experience-heading"><h2>Employment Experience 3</h2><button class="remove-button" type="button" data-remove="3">Remove</button></div>
-              <div class="fields-grid">
-                <div class="field"><label for="business-name-3">Business Name <span class="required">*</span></label><input id="business-name-3" name="experience_3_business_name" type="text" disabled /></div>
-                <div class="field"><label for="job-title-3">Job Title / Description <span class="required">*</span></label><input id="job-title-3" name="experience_3_job_title" type="text" disabled /></div>
-                <div class="field"><label for="start-date-3">Start Date <span class="required">*</span></label><input id="start-date-3" name="experience_3_start_date" type="date" disabled /></div>
-                <div class="field"><label for="end-date-3">End Date <span class="required">*</span></label><input id="end-date-3" name="experience_3_end_date" type="date" disabled /></div>
-                <div class="field full-width"><label for="reason-leaving-3">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-3" name="experience_3_reason_for_leaving" type="text" disabled /></div>
-                <div class="field full-width"><label for="street-3">Business Street Address <span class="required">*</span></label><input id="street-3" name="experience_3_business_street_address" type="text" disabled /></div>
-                <div class="field"><label for="city-3">City <span class="required">*</span></label><input id="city-3" name="experience_3_city" type="text" disabled /></div>
-                <div class="field"><label for="state-3">State <span class="required">*</span></label><select id="state-3" name="experience_3_state" disabled><option value="">Select state</option></select></div>
-                <div class="field"><label for="zip-3">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-3" name="experience_3_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
-              </div>
-            </section>
-
-            <section class="experience-card is-hidden" data-experience="4" aria-hidden="true">
-              <div class="experience-heading"><h2>Employment Experience 4</h2><button class="remove-button" type="button" data-remove="4">Remove</button></div>
-              <div class="fields-grid">
-                <div class="field"><label for="business-name-4">Business Name <span class="required">*</span></label><input id="business-name-4" name="experience_4_business_name" type="text" disabled /></div>
-                <div class="field"><label for="job-title-4">Job Title / Description <span class="required">*</span></label><input id="job-title-4" name="experience_4_job_title" type="text" disabled /></div>
-                <div class="field"><label for="start-date-4">Start Date <span class="required">*</span></label><input id="start-date-4" name="experience_4_start_date" type="date" disabled /></div>
-                <div class="field"><label for="end-date-4">End Date <span class="required">*</span></label><input id="end-date-4" name="experience_4_end_date" type="date" disabled /></div>
-                <div class="field full-width"><label for="reason-leaving-4">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-4" name="experience_4_reason_for_leaving" type="text" disabled /></div>
-                <div class="field full-width"><label for="street-4">Business Street Address <span class="required">*</span></label><input id="street-4" name="experience_4_business_street_address" type="text" disabled /></div>
-                <div class="field"><label for="city-4">City <span class="required">*</span></label><input id="city-4" name="experience_4_city" type="text" disabled /></div>
-                <div class="field"><label for="state-4">State <span class="required">*</span></label><select id="state-4" name="experience_4_state" disabled><option value="">Select state</option></select></div>
-                <div class="field"><label for="zip-4">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-4" name="experience_4_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
-              </div>
-            </section>
-
-            <section class="experience-card is-hidden" data-experience="5" aria-hidden="true">
-              <div class="experience-heading"><h2>Employment Experience 5</h2><button class="remove-button" type="button" data-remove="5">Remove</button></div>
-              <div class="fields-grid">
-                <div class="field"><label for="business-name-5">Business Name <span class="required">*</span></label><input id="business-name-5" name="experience_5_business_name" type="text" disabled /></div>
-                <div class="field"><label for="job-title-5">Job Title / Description <span class="required">*</span></label><input id="job-title-5" name="experience_5_job_title" type="text" disabled /></div>
-                <div class="field"><label for="start-date-5">Start Date <span class="required">*</span></label><input id="start-date-5" name="experience_5_start_date" type="date" disabled /></div>
-                <div class="field"><label for="end-date-5">End Date <span class="required">*</span></label><input id="end-date-5" name="experience_5_end_date" type="date" disabled /></div>
-                <div class="field full-width"><label for="reason-leaving-5">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-5" name="experience_5_reason_for_leaving" type="text" disabled /></div>
-                <div class="field full-width"><label for="street-5">Business Street Address <span class="required">*</span></label><input id="street-5" name="experience_5_business_street_address" type="text" disabled /></div>
-                <div class="field"><label for="city-5">City <span class="required">*</span></label><input id="city-5" name="experience_5_city" type="text" disabled /></div>
-                <div class="field"><label for="state-5">State <span class="required">*</span></label><select id="state-5" name="experience_5_state" disabled><option value="">Select state</option></select></div>
-                <div class="field"><label for="zip-5">5-Digit ZIP Code <span class="required">*</span></label><input id="zip-5" name="experience_5_zip" type="text" inputmode="numeric" maxlength="5" pattern="[0-9]{5}" placeholder="00000" disabled /></div>
-              </div>
-            </section>
           </div>
 
           <div class="experience-actions">
             <button id="add-experience" class="secondary-button" type="button">+ Add Another Employer</button>
-            <p id="experience-limit" class="limit-message is-hidden">Maximum of 5 employment entries reached. If more are needed to cover the past 5 years, contact the office.</p>
+            <p id="experience-limit" class="limit-message is-hidden">Maximum of 20 employment entries reached. If more are needed to cover the past 5 years, contact the office.</p>
+          </div>
+        </section>
+
+        <section class="identity-document-section" aria-labelledby="identity-document-heading">
+          <p class="step-label">Identity Document</p>
+          <h2 id="identity-document-heading">Driver License</h2>
+          <p class="section-description">
+            Because this employment form is for a driving instructor, upload a clear photo of the <strong>front of your driver license</strong>.
+            The document is stored privately and must be reviewed by authorized Avian office staff.
+          </p>
+
+          <div class="identity-upload-box">
+            <label for="identity-document">Driver License — Front <span class="required">*</span></label>
+            <input
+              id="identity-document"
+              name="identity_document"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              required
+            />
+            <span class="field-help">JPEG, PNG, or WebP. Maximum file size: 8 MB.</span>
+            <p id="identity-document-selected" class="identity-file-selected">No file selected.</p>
           </div>
         </section>
 
@@ -265,7 +225,7 @@
         </section>
 
         <div id="form-status" class="form-status" role="status" aria-live="polite"></div>
-        <button id="submit-button" class="submit-button" type="submit">Submit Employment History</button>
+        <button id="submit-button" class="submit-button" type="submit">Submit Employment Information</button>
       </form>
     </section>
   </main>
