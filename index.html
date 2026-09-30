@@ -40,7 +40,7 @@
             <input id="last-name" name="last_name" type="text" autocomplete="family-name" required />
           </div>
 
-          <div class="field">
+          <div class="field" id="cid-field">
             <label for="cid-number">CID Number <span class="required">*</span></label>
             <input
               id="cid-number"
@@ -53,7 +53,7 @@
               autocomplete="off"
               required
             />
-            <span class="field-help"><strong>Important:</strong> Your CID is used to verify your identity. If the CID entered does not match the CID associated with this secure invitation, your submission will not be accepted.</span>
+            <span class="field-help" id="cid-help"><strong>Important:</strong> Your CID is used to verify your identity. If the CID entered does not match the CID associated with this secure invitation, your submission will not be accepted.</span>
           </div>
 
           <div class="field">
@@ -197,14 +197,19 @@
 
         <section class="identity-document-section" aria-labelledby="identity-document-heading">
           <p class="step-label">Identity Document</p>
-          <h2 id="identity-document-heading">Driver License</h2>
-          <p class="section-description">
-            Because this employment form is for a driving instructor, upload a clear photo of the <strong>front of your driver license</strong>.
-            The document is stored privately and must be reviewed by authorized Avian office staff.
+          <h2 id="identity-document-heading">Identity Document</h2>
+          <p class="section-description" id="identity-document-description">
+            Upload the identity document allowed by your secure employment invitation. The document is stored privately and must be reviewed by authorized Avian office staff.
           </p>
 
           <div class="identity-upload-box">
-            <label for="identity-document">Driver License — Front <span class="required">*</span></label>
+            <div class="field">
+              <label for="identity-document-type">Document Type <span class="required">*</span></label>
+              <select id="identity-document-type" name="identity_document_type" required>
+                <option value="driver_license">Driver License</option>
+              </select>
+            </div>
+            <label for="identity-document" id="identity-document-label">Driver License — Front</label><span class="required"> *</span>
             <input
               id="identity-document"
               name="identity_document"
