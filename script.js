@@ -1,4 +1,4 @@
-const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2";
+const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/platform-employment-form";
 const MAX_EXPERIENCE_ENTRIES = 20;
 const MAX_IDENTITY_DOCUMENT_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IDENTITY_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -29,8 +29,23 @@ const cidInput = document.getElementById("cid-number");
 const ssnInput = document.getElementById("social-security-number");
 const identityDocumentInput = document.getElementById("identity-document");
 const identityDocumentSelected = document.getElementById("identity-document-selected");
+const identityDocumentHeading = document.getElementById("identity-document-heading");
+const identityDocumentDescription = document.getElementById("identity-document-description");
+const identityDocumentLabel = document.getElementById("identity-document-label");
+const identityDocumentType = document.getElementById("identity-document-type");
+const cidField = document.getElementById("cid-field");
+const cidHelp = document.getElementById("cid-help");
 const inviteToken = new URLSearchParams(window.location.search).get("invite")?.trim() || "";
 const inviteStatus = document.createElement("div");
+let inviteContext = {
+  employeeName: "",
+  employeeRole: "instructor",
+  requiresCid: true,
+  identityDocumentRequirement: {
+    allowedDocumentTypes: ["driver_license"],
+    defaultDocumentType: "driver_license"
+  }
+};
 
 inviteStatus.className = "invite-status";
 inviteStatus.setAttribute("role", "status");
@@ -203,22 +218,84 @@ function collectEmploymentHistory() {
   });
 }
 
+function documentTypeLabel(value) {
+  return value === "state_id" ? "State ID" : "Driver License";
+}
+
+function formatEmployeeRole(value) {
+  return String(value || "employee")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function configureInvite(data) {
+  inviteContext = {
+    employeeName: String(data.employeeName || ""),
+    employeeRole: String(data.employeeRole || "other"),
+    requiresCid: Boolean(data.requiresCid),
+    identityDocumentRequirement: data.identityDocumentRequirement || {}
+  };
+
+  const requirement = inviteContext.identityDocumentRequirement;
+  const allowedTypes = Array.isArray(requirement.allowedDocumentTypes) && requirement.allowedDocumentTypes.length
+    ? requirement.allowedDocumentTypes
+    : ["driver_license"];
+  const defaultType = allowedTypes.includes(requirement.defaultDocumentType)
+    ? requirement.defaultDocumentType
+    : allowedTypes[0];
+
+  identityDocumentType.innerHTML = "";
+  allowedTypes.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = documentTypeLabel(value);
+    identityDocumentType.appendChild(option);
+  });
+  identityDocumentType.value = defaultType;
+
+  cidField.classList.toggle("is-hidden", !inviteContext.requiresCid);
+  cidInput.required = inviteContext.requiresCid;
+  cidInput.disabled = !inviteContext.requiresCid;
+  if (!inviteContext.requiresCid) cidInput.value = "";
+
+  cidHelp.textContent = inviteContext.requiresCid
+    ? "Important: Your 9-digit CID is required to verify this instructor invitation."
+    : "CID is not required for this staff employment invitation.";
+
+  const roleLabel = formatEmployeeRole(inviteContext.employeeRole);
+  const selectedLabel = documentTypeLabel(defaultType);
+  identityDocumentHeading.textContent = "Identity Document";
+  identityDocumentDescription.innerHTML = inviteContext.employeeRole === "instructor"
+    ? "Upload a clear photo of the <strong>front of your driver license</strong>. The document is stored privately and reviewed by authorized Avian office staff."
+    : `Upload a clear photo of the <strong>front of your selected identity document</strong> for this ${roleLabel} employment record. The document is stored privately and reviewed by authorized Avian office staff.`;
+  identityDocumentLabel.textContent = `${selectedLabel} — Front`;
+}
+
 function validateIdentityDocument() {
   const file = identityDocumentInput.files?.[0] || null;
+  const selectedType = identityDocumentType.value || inviteContext.identityDocumentRequirement?.defaultDocumentType || "driver_license";
+  const selectedLabel = documentTypeLabel(selectedType);
+  const allowedTypes = inviteContext.identityDocumentRequirement?.allowedDocumentTypes || ["driver_license"];
+
+  if (!allowedTypes.includes(selectedType)) {
+    identityDocumentType.setCustomValidity("Select an identity document allowed for this invitation.");
+    throw new Error("Select an identity document allowed for this invitation.");
+  }
+  identityDocumentType.setCustomValidity("");
 
   if (!file) {
-    identityDocumentInput.setCustomValidity("Upload a clear image of the front of your driver license.");
-    throw new Error("Upload a clear image of the front of your driver license.");
+    identityDocumentInput.setCustomValidity(`Upload a clear image of the front of your ${selectedLabel.toLowerCase()}.`);
+    throw new Error(`Upload a clear image of the front of your ${selectedLabel.toLowerCase()}.`);
   }
 
   if (!ALLOWED_IDENTITY_MIME_TYPES.has(file.type)) {
     identityDocumentInput.setCustomValidity("Upload a JPEG, PNG, or WebP image.");
-    throw new Error("Upload a JPEG, PNG, or WebP image of your driver license.");
+    throw new Error(`Upload a JPEG, PNG, or WebP image of your ${selectedLabel.toLowerCase()}.`);
   }
 
   if (file.size <= 0 || file.size > MAX_IDENTITY_DOCUMENT_BYTES) {
-    identityDocumentInput.setCustomValidity("Driver license image must be 8 MB or smaller.");
-    throw new Error("Driver license image must be 8 MB or smaller.");
+    identityDocumentInput.setCustomValidity("Identity document image must be 8 MB or smaller.");
+    throw new Error("Identity document image must be 8 MB or smaller.");
   }
 
   identityDocumentInput.setCustomValidity("");
@@ -231,12 +308,12 @@ function buildSubmissionPayload() {
   return {
     action: "submit",
     token: inviteToken,
-    employee_role: "instructor",
-    document_type: "driver_license",
+    employee_role: inviteContext.employeeRole,
+    document_type: identityDocumentType.value || inviteContext.identityDocumentRequirement?.defaultDocumentType || "driver_license",
     first_name: String(formData.get("first_name") || "").trim(),
     middle_name: String(formData.get("middle_name") || "").trim(),
     last_name: String(formData.get("last_name") || "").trim(),
-    cid: String(formData.get("cid_number") || "").trim(),
+    cid: inviteContext.requiresCid ? String(formData.get("cid_number") || "").trim() : "",
     ssn: String(formData.get("social_security_number") || "").trim(),
     email: String(formData.get("email") || "").trim(),
     phone: String(formData.get("employee_phone") || "").trim(),
@@ -270,8 +347,11 @@ async function resolveInvite() {
       return;
     }
 
-    const cidHint = data.cidLast4 ? ` CID ending in ${data.cidLast4}.` : "";
-    setInviteStatus(`Secure employment form for ${data.instructorName}.${cidHint} Enter your full 9-digit CID below to confirm your identity.`, "success");
+    configureInvite(data);
+    const roleLabel = formatEmployeeRole(data.employeeRole);
+    const cidHint = data.requiresCid && data.cidLast4 ? ` CID ending in ${data.cidLast4}.` : "";
+    const cidInstruction = data.requiresCid ? " Enter your full 9-digit CID below to confirm your identity." : "";
+    setInviteStatus(`Secure employment form for ${data.employeeName} · ${roleLabel}.${cidHint}${cidInstruction}`, "success");
     form.classList.remove("is-hidden");
   } catch (error) {
     setInviteStatus(error.message, error.status === 409 ? "success" : "error");
@@ -307,6 +387,12 @@ cidInput.addEventListener("input", () => {
 
 ssnInput.addEventListener("input", () => {
   ssnInput.value = formatSsn(ssnInput.value);
+});
+
+identityDocumentType.addEventListener("change", () => {
+  identityDocumentType.setCustomValidity("");
+  identityDocumentLabel.textContent = `${documentTypeLabel(identityDocumentType.value)} — Front`;
+  identityDocumentInput.setCustomValidity("");
 });
 
 identityDocumentInput.addEventListener("change", () => {
@@ -353,9 +439,9 @@ form.addEventListener("submit", async (event) => {
   try {
     await submitEmploymentApplication(buildSubmissionPayload(), identityDocument);
 
-    statusMessage.textContent = "Thank you. Your employment information and driver license were submitted successfully.";
+    statusMessage.textContent = "Thank you. Your employment information and identity document were submitted successfully.";
     statusMessage.classList.add("success");
-    setInviteStatus("Submission complete. Your employment information and driver license are now connected to your Avian instructor profile for Office review.", "success");
+    setInviteStatus("Submission complete. Your employment information and identity document are connected to your permanent Avian staff profile for Office review.", "success");
     form.reset();
     identityDocumentSelected.textContent = "No file selected.";
     identityDocumentSelected.className = "identity-file-selected";
