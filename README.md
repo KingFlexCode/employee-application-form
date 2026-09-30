@@ -1,104 +1,63 @@
 # Avian Employee Employment History Form
 
-A simple static HTML/CSS/JavaScript form hosted separately from the Avian staff applications. The public page is designed to be shared with current instructors through a secure one-time invitation link.
+A standalone secure employment-history and identity-document form for Avian Driving School. It supports both instructor identities and non-instructor permanent Platform staff profiles through one role-aware invitation flow.
 
 ## Current workflow
 
-1. Office opens an instructor profile in the Avian Student Record Card app.
-2. The instructor must have a unique 9-digit CID.
-3. Office generates a secure employment-form invitation link.
-4. The instructor opens this standalone form with the `?invite=...` token in the URL.
-5. The form verifies the invitation with the Avian Student Record Card Supabase backend.
-6. The instructor enters their full 9-digit CID to confirm the invitation belongs to them.
-7. The instructor uploads a clear image of the front of their driver license.
-8. The completed form and driver-license image are submitted to the controlled Supabase Edge Function.
-9. Supabase attaches the submission to the permanent instructor directory profile and stores the image in a private Storage bucket.
-10. The invitation becomes used and the database prevents a second completed application for the same instructor.
-11. Authorized Office staff can review the private driver-license image and mark it Verified or Needs Replacement.
+1. Authorized Office staff generate a one-time employment invitation from the Avian Platform.
+2. The invitation is linked to exactly one permanent employee identity:
+   - instructors -> permanent `instructor_directory.id`;
+   - non-instructors -> permanent `staff_profiles.id`.
+3. The employee opens this site with the `?invite=...` token.
+4. The form resolves the invitation through the role-aware `platform-employment-form` Edge Function.
+5. Instructor invitations require the employee's full 9-digit CID and Driver License.
+6. Non-instructor invitations do not invent or require an instructor CID and may allow Driver License or State ID according to the backend invitation contract.
+7. The employee submits personal information, previous five-year employment history, SSN, and the permitted identity document.
+8. The Edge Function stores the identity image privately and calls the matching service-role-only transactional RPC.
+9. The application is linked to the existing permanent employee profile and becomes available for authorized Office review.
+10. Reused, expired, revoked, or already-completed invitations are rejected.
 
-## What the form collects
+## Security boundaries
 
-### Personal Information
+- The browser never receives a Supabase service-role key.
+- The browser does not receive direct table access to employment, SSN, invite-token, staff, or identity-document records.
+- Identity documents are stored in the private `employment-identity-documents` bucket.
+- Full SSN data remains separated from normal staff-profile reads.
+- Office profile screens receive only safe summaries by default; private document access uses short-lived signed URLs.
+- The public form follows the backend's `requiresCid` and `allowedDocumentTypes` response instead of deciding authorization rules itself.
 
-- First Name
-- Middle Name
-- Last Name
-- 9-digit CID
-- Social Security Number
-- Email
-- Phone
-- Street Address
-- Apartment / Unit
-- City
-- State
-- 5-digit ZIP Code
+## Form data
 
-### Previous Employment History — Past 5 Years
+The form collects legal name, SSN, email, phone, home address, and complete previous employment history covering the past five years. Up to 20 previous employers are supported.
 
-The employee must provide complete previous employment history covering the past 5 years, with the most recent previous employer first. Avian Driving School is not included as the current employer.
+For instructors, a valid 9-digit CID is required. For non-instructor Platform staff, CID is not required.
 
-Each previous employer includes:
+Identity-document rules are invitation-driven:
+- Instructor: Driver License only.
+- Non-instructor staff: Driver License or State ID when returned by the backend.
+- Front image only.
+- JPEG, PNG, or WebP.
+- Maximum 8 MB.
 
-- Business Name
-- Job Title / Description
-- Start Date
-- End Date
-- Reason for Leaving
-- Business Street Address
-- City
-- State
-- 5-digit ZIP Code
+## Backend endpoint
 
-The form supports up to 20 previous-employer records so the requirement means **five years of history**, not a five-job limit. If an employee needs more than 20 records to cover the five-year period, they are instructed to contact the office.
+`https://ciuulgbytouiafzecqku.supabase.co/functions/v1/platform-employment-form`
 
-### Identity Document
+Invite resolution uses JSON. Completed submissions use `multipart/form-data` with a JSON `payload` part plus the identity-document file.
 
-For the current instructor workflow:
+## Netlify deployment
 
-- Driver License is required.
-- The front image is required.
-- Accepted formats: JPEG, PNG, WebP.
-- Maximum file size: 8 MB.
-- The file is stored in the private `employment-identity-documents` Supabase Storage bucket.
-- The normal instructor profile does not expose a permanent public file URL.
-- Authorized Office staff receive a short-lived signed URL when they explicitly click **View Driver License**.
-- Review status is Pending Review, Verified, or Needs Replacement.
-
-The database model is role-aware so a later general employee form can allow State ID or Driver License for non-instructor staff while keeping Driver License mandatory for instructors.
-
-## Secure submission
-
-The EST-150 branch submits to:
-
-`https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2`
-
-Invite verification uses JSON. The completed employment submission uses `multipart/form-data` containing the structured form payload plus the driver-license image.
-
-The public browser does **not** receive a Supabase service-role key and does not receive direct access to the instructor directory, employment tables, or private identity-document bucket. The high-entropy invitation token and matching instructor CID are verified by the backend before a submission is accepted.
-
-The Edge Function uploads the identity image to private Storage first and then calls a database RPC that creates the employment application and identity-document metadata in one database transaction. If the database submission fails, the uploaded Storage object is removed.
-
-Full Social Security Number data remains separate from normal instructor-profile data. The standard Office instructor profile only receives the last four digits for confirmation. Do not enable ordinary email notifications for completed forms.
-
-## Deploy on Netlify
-
-This repository is deployed as a static site with no build command.
+This is a static site with no build command.
 
 - Build command: leave blank
 - Publish directory: `.`
 
-After deployment, use the Netlify site URL as the **Public employment form URL** in the instructor profile. Avian appends the one-time invitation token automatically.
-
-A valid shared link looks like:
+A valid link is:
 
 `https://your-site.netlify.app/?invite=<secure-token>`
 
-Opening the site without a valid invitation token intentionally prevents the form from being used.
+Opening the site without a valid invitation token intentionally leaves the form unavailable.
 
-## Netlify Forms
+## Platform integration
 
-Netlify is only the static host for this application. The HTML does **not** opt into Netlify Forms, and the completed form is never intentionally posted to Netlify. The page’s JavaScript submits directly to the Avian Supabase Edge Function.
-
-## Future Avian Platform integration
-
-The Student Record Card app is the current source of truth for instructor employment submissions because it already owns the permanent instructor directory. EST-147 tracks the later general Employee model for instructors, secretaries, managers, supervisors, and other staff when this functionality is consolidated into the larger Avian Platform.
+This form is the public counterpart to EST-147's generalized Platform employment identity model. It does not create a second permanent employee database and does not create fake instructor identities for secretaries, managers, supervisors, admins, escorts, resources, or other non-instructor staff.
