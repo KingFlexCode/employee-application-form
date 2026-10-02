@@ -175,6 +175,7 @@ function setCardActive(card, active) {
   if (!active) {
     card.querySelectorAll("input, select").forEach((control) => {
       control.value = "";
+      if (control.type === "checkbox") control.checked = false;
       control.required = false;
     });
   }
