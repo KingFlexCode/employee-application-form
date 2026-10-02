@@ -1,6 +1,6 @@
 const PLATFORM_API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/platform-employment-form";
 const INSTRUCTOR_API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2";
-let activeApiUrl = PLATFORM_API_URL;
+let activeApiUrl = INSTRUCTOR_API_URL;
 const MAX_EXPERIENCE_ENTRIES = 20;
 const MAX_IDENTITY_DOCUMENT_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IDENTITY_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -104,12 +104,15 @@ async function postJson(url, payload) {
 }
 
 async function callEmploymentApi(payload) {
-  let response = await postJson(PLATFORM_API_URL, payload);
+  // The unified Platform endpoint is staged but not deployed yet. Use the
+  // production instructor endpoint for instructor review so browser CORS
+  // preflight does not fail against a missing function. Once the unified
+  // endpoint is deployed, this can become the primary route.
+  let response = await postJson(INSTRUCTOR_API_URL, payload);
+  activeApiUrl = INSTRUCTOR_API_URL;
 
   if (response.status === 404) {
-    response = await postJson(INSTRUCTOR_API_URL, payload);
-    activeApiUrl = INSTRUCTOR_API_URL;
-  } else {
+    response = await postJson(PLATFORM_API_URL, payload);
     activeApiUrl = PLATFORM_API_URL;
   }
 
