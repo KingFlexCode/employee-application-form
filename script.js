@@ -22,6 +22,7 @@ const states = [
 ];
 
 const form = document.getElementById("employment-form");
+const formCard = document.querySelector(".form-card");
 const experienceList = document.getElementById("experience-list");
 const addButton = document.getElementById("add-experience");
 const limitMessage = document.getElementById("experience-limit");
@@ -104,18 +105,19 @@ async function postJson(url, payload) {
 }
 
 async function callEmploymentApi(payload) {
-  // The unified Platform endpoint is staged but not deployed yet. Use the
-  // production instructor endpoint for instructor review so browser CORS
-  // preflight does not fail against a missing function. Once the unified
-  // endpoint is deployed, this can become the primary route.
-  let response = await postJson(INSTRUCTOR_API_URL, payload);
-  activeApiUrl = INSTRUCTOR_API_URL;
-
-  if (response.status === 404) {
-    response = await postJson(PLATFORM_API_URL, payload);
+  // Prefer the unified Platform endpoint when it exists. During rollout the
+  // browser can fail the CORS preflight before fetch receives a Response, so
+  // a network/preflight failure falls back to the deployed instructor endpoint.
+  try {
+    const response = await postJson(PLATFORM_API_URL, payload);
     activeApiUrl = PLATFORM_API_URL;
+    return readJsonResponse(response);
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
   }
 
+  const response = await postJson(INSTRUCTOR_API_URL, payload);
+  activeApiUrl = INSTRUCTOR_API_URL;
   return readJsonResponse(response);
 }
 
@@ -417,6 +419,7 @@ async function resolveInvite() {
 
     if (data.status === "already_submitted") {
       setInviteStatus("Your employment information has already been submitted. Please contact the Avian office if a correction is needed.", "success");
+      formCard?.classList.add("is-complete");
       return;
     }
 
@@ -531,7 +534,11 @@ form.addEventListener("submit", async (event) => {
 
     statusMessage.textContent = "Thank you. Your employment information and identity document were submitted successfully.";
     statusMessage.classList.add("success");
-    setInviteStatus("Submission complete. Your employment information and identity document are connected to your permanent Avian staff profile for Office review.", "success");
+    const completionTarget = inviteContext.employeeRole === "instructor"
+      ? "permanent Avian instructor record"
+      : "permanent Avian staff profile";
+    setInviteStatus(`Submission complete. Your employment information and identity document are connected to your ${completionTarget} for Office review.`, "success");
+    formCard?.classList.add("is-complete");
     form.reset();
     identityDocumentSelected.textContent = "No file selected.";
     identityDocumentSelected.className = "identity-file-selected";
