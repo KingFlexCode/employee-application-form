@@ -289,11 +289,29 @@ function formatEmployeeRole(value) {
 }
 
 function configureInvite(data) {
+  const requirement = data.identityDocumentRequirement || {};
+  const resolvedRole = String(
+    data.employeeRole
+    || requirement.employeeRole
+    || (data.instructorName ? "instructor" : "other")
+  ).trim().toLowerCase();
+  const isInstructor = resolvedRole === "instructor";
+
   inviteContext = {
-    employeeName: String(data.employeeName || ""),
-    employeeRole: String(data.employeeRole || "other"),
-    requiresCid: Boolean(data.requiresCid),
-    identityDocumentRequirement: data.identityDocumentRequirement || {}
+    employeeName: String(data.employeeName || data.instructorName || ""),
+    employeeRole: resolvedRole,
+    requiresCid: typeof data.requiresCid === "boolean" ? data.requiresCid : isInstructor,
+    identityDocumentRequirement: {
+      ...requirement,
+      allowedDocumentTypes: Array.isArray(requirement.allowedDocumentTypes) && requirement.allowedDocumentTypes.length
+        ? requirement.allowedDocumentTypes
+        : requirement.documentType
+          ? [requirement.documentType]
+          : isInstructor
+            ? ["driver_license"]
+            : ["driver_license", "state_id"],
+      defaultDocumentType: requirement.defaultDocumentType || requirement.documentType || (isInstructor ? "driver_license" : "driver_license")
+    }
   };
 
   const requirement = inviteContext.identityDocumentRequirement;
