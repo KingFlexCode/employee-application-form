@@ -1,4 +1,6 @@
-const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2";
+const PLATFORM_API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/platform-employment-form";
+const INSTRUCTOR_API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2";
+let activeApiUrl = INSTRUCTOR_API_URL;
 const MAX_EXPERIENCE_ENTRIES = 20;
 const MAX_IDENTITY_DOCUMENT_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IDENTITY_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -20,6 +22,7 @@ const states = [
 ];
 
 const form = document.getElementById("employment-form");
+const formCard = document.querySelector(".form-card");
 const experienceList = document.getElementById("experience-list");
 const addButton = document.getElementById("add-experience");
 const limitMessage = document.getElementById("experience-limit");
@@ -29,8 +32,23 @@ const cidInput = document.getElementById("cid-number");
 const ssnInput = document.getElementById("social-security-number");
 const identityDocumentInput = document.getElementById("identity-document");
 const identityDocumentSelected = document.getElementById("identity-document-selected");
+const identityDocumentHeading = document.getElementById("identity-document-heading");
+const identityDocumentDescription = document.getElementById("identity-document-description");
+const identityDocumentLabel = document.getElementById("identity-document-label");
+const identityDocumentType = document.getElementById("identity-document-type");
+const cidField = document.getElementById("cid-field");
+const cidHelp = document.getElementById("cid-help");
 const inviteToken = new URLSearchParams(window.location.search).get("invite")?.trim() || "";
 const inviteStatus = document.createElement("div");
+let inviteContext = {
+  employeeName: "",
+  employeeRole: "instructor",
+  requiresCid: true,
+  identityDocumentRequirement: {
+    allowedDocumentTypes: ["driver_license"],
+    defaultDocumentType: "driver_license"
+  }
+};
 
 inviteStatus.className = "invite-status";
 inviteStatus.setAttribute("role", "status");
@@ -76,13 +94,30 @@ async function readJsonResponse(response) {
   return data;
 }
 
-async function callEmploymentApi(payload) {
-  const response = await fetch(API_URL, {
+async function postJson(url, payload) {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
 
+  return response;
+}
+
+async function callEmploymentApi(payload) {
+  // Prefer the unified Platform endpoint when it exists. During rollout the
+  // browser can fail the CORS preflight before fetch receives a Response, so
+  // a network/preflight failure falls back to the deployed instructor endpoint.
+  try {
+    const response = await postJson(PLATFORM_API_URL, payload);
+    activeApiUrl = PLATFORM_API_URL;
+    return readJsonResponse(response);
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+  }
+
+  const response = await postJson(INSTRUCTOR_API_URL, payload);
+  activeApiUrl = INSTRUCTOR_API_URL;
   return readJsonResponse(response);
 }
 
@@ -91,7 +126,7 @@ async function submitEmploymentApplication(payload, identityDocument) {
   requestBody.append("payload", JSON.stringify(payload));
   requestBody.append("identity_document", identityDocument, identityDocument.name);
 
-  const response = await fetch(API_URL, {
+  const response = await fetch(activeApiUrl, {
     method: "POST",
     body: requestBody
   });
@@ -114,8 +149,38 @@ function populateStateSelects() {
   document.querySelectorAll('select[name$="_state"]').forEach(populateStateSelect);
 }
 
+function todayIsoDate() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function setEndDateMax(input) {
-  if (input) input.max = new Date().toISOString().slice(0, 10);
+  if (input) input.max = todayIsoDate();
+}
+
+function setCurrentEmploymentState(card, currentlyEmployed) {
+  if (!card) return;
+
+  const endDate = card.querySelector('input[name$="_end_date"]');
+  const reason = card.querySelector('input[name$="_reason_for_leaving"]');
+  const note = card.querySelector(".current-employment-note");
+
+  if (endDate) {
+    endDate.disabled = currentlyEmployed;
+    endDate.required = !currentlyEmployed;
+    if (currentlyEmployed) endDate.value = "";
+  }
+
+  if (reason) {
+    reason.disabled = currentlyEmployed;
+    reason.required = !currentlyEmployed;
+    if (currentlyEmployed) reason.value = "Still employed here";
+    else if (reason.value === "Still employed here") reason.value = "";
+  }
+
+  note?.classList.toggle("is-hidden", !currentlyEmployed);
 }
 
 function setCardActive(card, active) {
@@ -124,12 +189,13 @@ function setCardActive(card, active) {
 
   card.querySelectorAll("input, select").forEach((control) => {
     control.disabled = !active;
-    control.required = active;
+    control.required = active && control.type !== "checkbox";
   });
 
   if (!active) {
     card.querySelectorAll("input, select").forEach((control) => {
       control.value = "";
+      if (control.type === "checkbox") control.checked = false;
       control.required = false;
     });
   }
@@ -148,8 +214,16 @@ function createExperienceCard(number) {
       <div class="field"><label for="business-name-${number}">Business Name <span class="required">*</span></label><input id="business-name-${number}" name="experience_${number}_business_name" type="text" required /></div>
       <div class="field"><label for="job-title-${number}">Job Title / Description <span class="required">*</span></label><input id="job-title-${number}" name="experience_${number}_job_title" type="text" required /></div>
       <div class="field"><label for="start-date-${number}">Start Date <span class="required">*</span></label><input id="start-date-${number}" name="experience_${number}_start_date" type="date" required /></div>
-      <div class="field"><label for="end-date-${number}">End Date <span class="required">*</span></label><input id="end-date-${number}" name="experience_${number}_end_date" type="date" required /></div>
-      <div class="field full-width"><label for="reason-leaving-${number}">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-${number}" name="experience_${number}_reason_for_leaving" type="text" required /></div>
+      <div class="field end-date-field">
+        <label for="end-date-${number}">End Date <span class="required">*</span></label>
+        <input id="end-date-${number}" name="experience_${number}_end_date" type="date" required />
+        <label class="checkbox-row current-employment-check" for="currently-employed-${number}">
+          <input id="currently-employed-${number}" name="experience_${number}_currently_employed" type="checkbox" class="currently-employed-checkbox" />
+          <span>I currently work here</span>
+        </label>
+        <span class="field-help current-employment-note is-hidden">End date will be recorded as <strong>Present</strong>.</span>
+      </div>
+      <div class="field full-width"><label for="reason-leaving-${number}">Reason for Leaving / Current Status <span class="required">*</span></label><input id="reason-leaving-${number}" name="experience_${number}_reason_for_leaving" type="text" required /><span class="field-help">If you still work here, check “I currently work here” above. This field will automatically show “Still employed here.”</span></div>
       <div class="field full-width"><label for="street-${number}">Business Street Address <span class="required">*</span></label><input id="street-${number}" name="experience_${number}_business_street_address" type="text" required /></div>
       <div class="field"><label for="city-${number}">City <span class="required">*</span></label><input id="city-${number}" name="experience_${number}_city" type="text" required /></div>
       <div class="field"><label for="state-${number}">State <span class="required">*</span></label><select id="state-${number}" name="experience_${number}_state" required><option value="">Select state</option></select></div>
@@ -189,12 +263,15 @@ function collectEmploymentHistory() {
     const number = card.dataset.experience;
     const value = (field) => form.elements[`experience_${number}_${field}`]?.value?.trim() || "";
 
+    const currentlyEmployed = Boolean(form.elements[`experience_${number}_currently_employed`]?.checked);
+
     return {
       business_name: value("business_name"),
       job_title: value("job_title"),
       start_date: value("start_date"),
-      end_date: value("end_date"),
-      reason_for_leaving: value("reason_for_leaving"),
+      end_date: currentlyEmployed ? todayIsoDate() : value("end_date"),
+      currently_employed: currentlyEmployed,
+      reason_for_leaving: currentlyEmployed ? "Still employed here" : value("reason_for_leaving"),
       business_street_address: value("business_street_address"),
       city: value("city"),
       state: value("state"),
@@ -203,22 +280,102 @@ function collectEmploymentHistory() {
   });
 }
 
+function documentTypeLabel(value) {
+  return value === "state_id" ? "State ID" : "Driver License";
+}
+
+function formatEmployeeRole(value) {
+  return String(value || "employee")
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function configureInvite(data) {
+  const requirement = data.identityDocumentRequirement || {};
+  const resolvedRole = String(
+    data.employeeRole
+    || requirement.employeeRole
+    || (data.instructorName ? "instructor" : "other")
+  ).trim().toLowerCase();
+  const isInstructor = resolvedRole === "instructor";
+
+  inviteContext = {
+    employeeName: String(data.employeeName || data.instructorName || ""),
+    employeeRole: resolvedRole,
+    requiresCid: typeof data.requiresCid === "boolean" ? data.requiresCid : isInstructor,
+    identityDocumentRequirement: {
+      ...requirement,
+      allowedDocumentTypes: Array.isArray(requirement.allowedDocumentTypes) && requirement.allowedDocumentTypes.length
+        ? requirement.allowedDocumentTypes
+        : requirement.documentType
+          ? [requirement.documentType]
+          : isInstructor
+            ? ["driver_license"]
+            : ["driver_license", "state_id"],
+      defaultDocumentType: requirement.defaultDocumentType || requirement.documentType || (isInstructor ? "driver_license" : "driver_license")
+    }
+  };
+
+  const normalizedRequirement = inviteContext.identityDocumentRequirement;
+  const allowedTypes = Array.isArray(normalizedRequirement.allowedDocumentTypes) && normalizedRequirement.allowedDocumentTypes.length
+    ? normalizedRequirement.allowedDocumentTypes
+    : ["driver_license"];
+  const defaultType = allowedTypes.includes(normalizedRequirement.defaultDocumentType)
+    ? normalizedRequirement.defaultDocumentType
+    : allowedTypes[0];
+
+  identityDocumentType.innerHTML = "";
+  allowedTypes.forEach((value) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = documentTypeLabel(value);
+    identityDocumentType.appendChild(option);
+  });
+  identityDocumentType.value = defaultType;
+
+  cidField.classList.toggle("is-hidden", !inviteContext.requiresCid);
+  cidInput.required = inviteContext.requiresCid;
+  cidInput.disabled = !inviteContext.requiresCid;
+  if (!inviteContext.requiresCid) cidInput.value = "";
+
+  cidHelp.textContent = inviteContext.requiresCid
+    ? "Important: Your 9-digit CID is required to verify this instructor invitation."
+    : "CID is not required for this staff employment invitation.";
+
+  const roleLabel = formatEmployeeRole(inviteContext.employeeRole);
+  const selectedLabel = documentTypeLabel(defaultType);
+  identityDocumentHeading.textContent = "Identity Document";
+  identityDocumentDescription.innerHTML = inviteContext.employeeRole === "instructor"
+    ? "Upload a clear photo of the <strong>front of your driver license</strong>. The document is stored privately and reviewed by authorized Avian office staff."
+    : `Upload a clear photo of the <strong>front of your selected identity document</strong> for this ${roleLabel} employment record. The document is stored privately and reviewed by authorized Avian office staff.`;
+  identityDocumentLabel.textContent = `${selectedLabel} — Front`;
+}
+
 function validateIdentityDocument() {
   const file = identityDocumentInput.files?.[0] || null;
+  const selectedType = identityDocumentType.value || inviteContext.identityDocumentRequirement?.defaultDocumentType || "driver_license";
+  const selectedLabel = documentTypeLabel(selectedType);
+  const allowedTypes = inviteContext.identityDocumentRequirement?.allowedDocumentTypes || ["driver_license"];
+
+  if (!allowedTypes.includes(selectedType)) {
+    identityDocumentType.setCustomValidity("Select an identity document allowed for this invitation.");
+    throw new Error("Select an identity document allowed for this invitation.");
+  }
+  identityDocumentType.setCustomValidity("");
 
   if (!file) {
-    identityDocumentInput.setCustomValidity("Upload a clear image of the front of your driver license.");
-    throw new Error("Upload a clear image of the front of your driver license.");
+    identityDocumentInput.setCustomValidity(`Upload a clear image of the front of your ${selectedLabel.toLowerCase()}.`);
+    throw new Error(`Upload a clear image of the front of your ${selectedLabel.toLowerCase()}.`);
   }
 
   if (!ALLOWED_IDENTITY_MIME_TYPES.has(file.type)) {
     identityDocumentInput.setCustomValidity("Upload a JPEG, PNG, or WebP image.");
-    throw new Error("Upload a JPEG, PNG, or WebP image of your driver license.");
+    throw new Error(`Upload a JPEG, PNG, or WebP image of your ${selectedLabel.toLowerCase()}.`);
   }
 
   if (file.size <= 0 || file.size > MAX_IDENTITY_DOCUMENT_BYTES) {
-    identityDocumentInput.setCustomValidity("Driver license image must be 8 MB or smaller.");
-    throw new Error("Driver license image must be 8 MB or smaller.");
+    identityDocumentInput.setCustomValidity("Identity document image must be 8 MB or smaller.");
+    throw new Error("Identity document image must be 8 MB or smaller.");
   }
 
   identityDocumentInput.setCustomValidity("");
@@ -231,12 +388,12 @@ function buildSubmissionPayload() {
   return {
     action: "submit",
     token: inviteToken,
-    employee_role: "instructor",
-    document_type: "driver_license",
+    employee_role: inviteContext.employeeRole,
+    document_type: identityDocumentType.value || inviteContext.identityDocumentRequirement?.defaultDocumentType || "driver_license",
     first_name: String(formData.get("first_name") || "").trim(),
     middle_name: String(formData.get("middle_name") || "").trim(),
     last_name: String(formData.get("last_name") || "").trim(),
-    cid: String(formData.get("cid_number") || "").trim(),
+    cid: inviteContext.requiresCid ? String(formData.get("cid_number") || "").trim() : "",
     ssn: String(formData.get("social_security_number") || "").trim(),
     email: String(formData.get("email") || "").trim(),
     phone: String(formData.get("employee_phone") || "").trim(),
@@ -262,6 +419,7 @@ async function resolveInvite() {
 
     if (data.status === "already_submitted") {
       setInviteStatus("Your employment information has already been submitted. Please contact the Avian office if a correction is needed.", "success");
+      formCard?.classList.add("is-complete");
       return;
     }
 
@@ -270,8 +428,11 @@ async function resolveInvite() {
       return;
     }
 
-    const cidHint = data.cidLast4 ? ` CID ending in ${data.cidLast4}.` : "";
-    setInviteStatus(`Secure employment form for ${data.instructorName}.${cidHint} Enter your full 9-digit CID below to confirm your identity.`, "success");
+    configureInvite(data);
+    const roleLabel = formatEmployeeRole(data.employeeRole);
+    const cidHint = data.requiresCid && data.cidLast4 ? ` CID ending in ${data.cidLast4}.` : "";
+    const cidInstruction = data.requiresCid ? " Enter your full 9-digit CID below to confirm your identity." : "";
+    setInviteStatus(`Secure employment form for ${data.employeeName} · ${roleLabel}.${cidHint}${cidInstruction}`, "success");
     form.classList.remove("is-hidden");
   } catch (error) {
     setInviteStatus(error.message, error.status === 409 ? "success" : "error");
@@ -285,6 +446,14 @@ addButton.addEventListener("click", () => {
   if (nextCard.classList.contains("is-hidden")) setCardActive(nextCard, true);
   refreshAddButton();
   nextCard.scrollIntoView({ behavior: "smooth", block: "start" });
+});
+
+experienceList.addEventListener("change", (event) => {
+  const checkbox = event.target.closest(".currently-employed-checkbox");
+  if (!checkbox) return;
+
+  const card = checkbox.closest(".experience-card");
+  setCurrentEmploymentState(card, checkbox.checked);
 });
 
 experienceList.addEventListener("click", (event) => {
@@ -309,6 +478,12 @@ ssnInput.addEventListener("input", () => {
   ssnInput.value = formatSsn(ssnInput.value);
 });
 
+identityDocumentType.addEventListener("change", () => {
+  identityDocumentType.setCustomValidity("");
+  identityDocumentLabel.textContent = `${documentTypeLabel(identityDocumentType.value)} — Front`;
+  identityDocumentInput.setCustomValidity("");
+});
+
 identityDocumentInput.addEventListener("change", () => {
   identityDocumentInput.setCustomValidity("");
   const file = identityDocumentInput.files?.[0] || null;
@@ -329,6 +504,10 @@ identityDocumentInput.addEventListener("change", () => {
 });
 
 document.querySelectorAll('input[name$="_end_date"]').forEach(setEndDateMax);
+document.querySelectorAll(".experience-card").forEach((card) => {
+  const checkbox = card.querySelector(".currently-employed-checkbox");
+  setCurrentEmploymentState(card, Boolean(checkbox?.checked));
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -353,9 +532,13 @@ form.addEventListener("submit", async (event) => {
   try {
     await submitEmploymentApplication(buildSubmissionPayload(), identityDocument);
 
-    statusMessage.textContent = "Thank you. Your employment information and driver license were submitted successfully.";
+    statusMessage.textContent = "Thank you. Your employment information and identity document were submitted successfully.";
     statusMessage.classList.add("success");
-    setInviteStatus("Submission complete. Your employment information and driver license are now connected to your Avian instructor profile for Office review.", "success");
+    const completionTarget = inviteContext.employeeRole === "instructor"
+      ? "permanent Avian instructor record"
+      : "permanent Avian staff profile";
+    setInviteStatus(`Submission complete. Your employment information and identity document are connected to your ${completionTarget} for Office review.`, "success");
+    formCard?.classList.add("is-complete");
     form.reset();
     identityDocumentSelected.textContent = "No file selected.";
     identityDocumentSelected.className = "identity-file-selected";

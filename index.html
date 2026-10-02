@@ -13,7 +13,7 @@
         <p class="eyebrow">Avian Driving School</p>
         <h1>Employee Employment History Form</h1>
         <p class="intro">
-          Please complete the personal information, previous employment history, and identity document requested below.
+          Please complete the personal information, employment history, and identity document requested below.
           Fields marked with <span class="required">*</span> are required.
         </p>
       </header>
@@ -40,7 +40,7 @@
             <input id="last-name" name="last_name" type="text" autocomplete="family-name" required />
           </div>
 
-          <div class="field">
+          <div class="field" id="cid-field">
             <label for="cid-number">CID Number <span class="required">*</span></label>
             <input
               id="cid-number"
@@ -53,7 +53,7 @@
               autocomplete="off"
               required
             />
-            <span class="field-help"><strong>Important:</strong> Your CID is used to verify your identity. If the CID entered does not match the CID associated with this secure invitation, your submission will not be accepted.</span>
+            <span class="field-help" id="cid-help"><strong>Important:</strong> Your CID is used to verify your identity. If the CID entered does not match the CID associated with this secure invitation, your submission will not be accepted.</span>
           </div>
 
           <div class="field">
@@ -132,10 +132,10 @@
         </section>
 
         <section class="employment-history-section" aria-labelledby="employment-history-heading">
-          <h2 id="employment-history-heading">Previous Employment History — Past 5 Years</h2>
+          <h2 id="employment-history-heading">Employment History — Past 5 Years</h2>
           <p class="section-description">
-            Please provide your <strong>complete employment history covering the past 5 years</strong>, starting with your most recent previous employer.
-            Include every employer you worked for during that 5-year period. If a job started more than 5 years ago but continued into the last 5 years,
+            Please provide your <strong>complete employment history covering the past 5 years</strong>, starting with your most recent employer.
+            Include every employer you worked for during that 5-year period, including any employer you currently work for. If a job started more than 5 years ago but continued into the last 5 years,
             enter the actual start date. Do not include Avian Driving School as your current employer.
           </p>
 
@@ -143,7 +143,7 @@
             <section class="experience-card" data-experience="1">
               <div class="experience-heading">
                 <div>
-                  <span class="step-label">Most Recent Previous Employer</span>
+                  <span class="step-label">Most Recent Employer</span>
                   <h2>Employment Experience 1</h2>
                 </div>
               </div>
@@ -164,10 +164,16 @@
                 <div class="field end-date-field">
                   <label for="end-date-1">End Date <span class="required">*</span></label>
                   <input id="end-date-1" name="experience_1_end_date" type="date" required />
+                  <label class="checkbox-row current-employment-check" for="currently-employed-1">
+                    <input id="currently-employed-1" name="experience_1_currently_employed" type="checkbox" class="currently-employed-checkbox" />
+                    <span>I currently work here</span>
+                  </label>
+                  <span class="field-help current-employment-note is-hidden">End date will be recorded as <strong>Present</strong>.</span>
                 </div>
                 <div class="field full-width reason-field">
-                  <label for="reason-leaving-1">Reason for Leaving <span class="required">*</span></label>
+                  <label for="reason-leaving-1">Reason for Leaving / Current Status <span class="required">*</span></label>
                   <input id="reason-leaving-1" name="experience_1_reason_for_leaving" type="text" required />
+                  <span class="field-help">If you still work here, check “I currently work here” above. This field will automatically show “Still employed here.”</span>
                 </div>
                 <div class="field full-width">
                   <label for="street-1">Business Street Address <span class="required">*</span></label>
@@ -197,14 +203,19 @@
 
         <section class="identity-document-section" aria-labelledby="identity-document-heading">
           <p class="step-label">Identity Document</p>
-          <h2 id="identity-document-heading">Driver License</h2>
-          <p class="section-description">
-            Because this employment form is for a driving instructor, upload a clear photo of the <strong>front of your driver license</strong>.
-            The document is stored privately and must be reviewed by authorized Avian office staff.
+          <h2 id="identity-document-heading">Identity Document</h2>
+          <p class="section-description" id="identity-document-description">
+            Upload the identity document allowed by your secure employment invitation. The document is stored privately and must be reviewed by authorized Avian office staff.
           </p>
 
           <div class="identity-upload-box">
-            <label for="identity-document">Driver License — Front <span class="required">*</span></label>
+            <div class="field">
+              <label for="identity-document-type">Document Type <span class="required">*</span></label>
+              <select id="identity-document-type" name="identity_document_type" required>
+                <option value="driver_license">Driver License</option>
+              </select>
+            </div>
+            <label for="identity-document" id="identity-document-label">Driver License — Front</label><span class="required"> *</span>
             <input
               id="identity-document"
               name="identity_document"
@@ -220,7 +231,7 @@
         <section class="confirmation-box">
           <label class="checkbox-row confirmation-check">
             <input type="checkbox" name="information_certified" value="Yes" required />
-            <span>I certify that I have listed all previous employers from the past 5 years and that the information provided above is complete and accurate to the best of my knowledge. <span class="required">*</span></span>
+            <span>I certify that I have listed all employers from the past 5 years and that the information provided above is complete and accurate to the best of my knowledge. <span class="required">*</span></span>
           </label>
         </section>
 
