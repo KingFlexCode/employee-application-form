@@ -314,12 +314,12 @@ function configureInvite(data) {
     }
   };
 
-  const requirement = inviteContext.identityDocumentRequirement;
-  const allowedTypes = Array.isArray(requirement.allowedDocumentTypes) && requirement.allowedDocumentTypes.length
-    ? requirement.allowedDocumentTypes
+  const normalizedRequirement = inviteContext.identityDocumentRequirement;
+  const allowedTypes = Array.isArray(normalizedRequirement.allowedDocumentTypes) && normalizedRequirement.allowedDocumentTypes.length
+    ? normalizedRequirement.allowedDocumentTypes
     : ["driver_license"];
-  const defaultType = allowedTypes.includes(requirement.defaultDocumentType)
-    ? requirement.defaultDocumentType
+  const defaultType = allowedTypes.includes(normalizedRequirement.defaultDocumentType)
+    ? normalizedRequirement.defaultDocumentType
     : allowedTypes[0];
 
   identityDocumentType.innerHTML = "";
