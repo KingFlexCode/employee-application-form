@@ -210,6 +210,20 @@ select:disabled {
   flex: 0 0 auto;
 }
 
+.current-employment-check {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid #d7e2ea;
+  border-radius: 8px;
+  background: #f7fafc;
+}
+
+.current-employment-note {
+  margin-top: 0;
+  color: #176b45;
+  font-weight: 700;
+}
+
 .remove-button,
 .secondary-button,
 .submit-button {
