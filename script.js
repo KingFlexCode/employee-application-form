@@ -1,4 +1,6 @@
-const API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/platform-employment-form";
+const PLATFORM_API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/platform-employment-form";
+const INSTRUCTOR_API_URL = "https://ciuulgbytouiafzecqku.supabase.co/functions/v1/instructor-employment-form-v2";
+let activeApiUrl = PLATFORM_API_URL;
 const MAX_EXPERIENCE_ENTRIES = 20;
 const MAX_IDENTITY_DOCUMENT_BYTES = 8 * 1024 * 1024;
 const ALLOWED_IDENTITY_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
@@ -91,12 +93,25 @@ async function readJsonResponse(response) {
   return data;
 }
 
-async function callEmploymentApi(payload) {
-  const response = await fetch(API_URL, {
+async function postJson(url, payload) {
+  const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+
+  return response;
+}
+
+async function callEmploymentApi(payload) {
+  let response = await postJson(PLATFORM_API_URL, payload);
+
+  if (response.status === 404) {
+    response = await postJson(INSTRUCTOR_API_URL, payload);
+    activeApiUrl = INSTRUCTOR_API_URL;
+  } else {
+    activeApiUrl = PLATFORM_API_URL;
+  }
 
   return readJsonResponse(response);
 }
@@ -106,7 +121,7 @@ async function submitEmploymentApplication(payload, identityDocument) {
   requestBody.append("payload", JSON.stringify(payload));
   requestBody.append("identity_document", identityDocument, identityDocument.name);
 
-  const response = await fetch(API_URL, {
+  const response = await fetch(activeApiUrl, {
     method: "POST",
     body: requestBody
   });
