@@ -129,8 +129,38 @@ function populateStateSelects() {
   document.querySelectorAll('select[name$="_state"]').forEach(populateStateSelect);
 }
 
+function todayIsoDate() {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${now.getFullYear()}-${month}-${day}`;
+}
+
 function setEndDateMax(input) {
-  if (input) input.max = new Date().toISOString().slice(0, 10);
+  if (input) input.max = todayIsoDate();
+}
+
+function setCurrentEmploymentState(card, currentlyEmployed) {
+  if (!card) return;
+
+  const endDate = card.querySelector('input[name$="_end_date"]');
+  const reason = card.querySelector('input[name$="_reason_for_leaving"]');
+  const note = card.querySelector(".current-employment-note");
+
+  if (endDate) {
+    endDate.disabled = currentlyEmployed;
+    endDate.required = !currentlyEmployed;
+    if (currentlyEmployed) endDate.value = "";
+  }
+
+  if (reason) {
+    reason.disabled = currentlyEmployed;
+    reason.required = !currentlyEmployed;
+    if (currentlyEmployed) reason.value = "Still employed here";
+    else if (reason.value === "Still employed here") reason.value = "";
+  }
+
+  note?.classList.toggle("is-hidden", !currentlyEmployed);
 }
 
 function setCardActive(card, active) {
@@ -139,7 +169,7 @@ function setCardActive(card, active) {
 
   card.querySelectorAll("input, select").forEach((control) => {
     control.disabled = !active;
-    control.required = active;
+    control.required = active && control.type !== "checkbox";
   });
 
   if (!active) {
@@ -163,8 +193,16 @@ function createExperienceCard(number) {
       <div class="field"><label for="business-name-${number}">Business Name <span class="required">*</span></label><input id="business-name-${number}" name="experience_${number}_business_name" type="text" required /></div>
       <div class="field"><label for="job-title-${number}">Job Title / Description <span class="required">*</span></label><input id="job-title-${number}" name="experience_${number}_job_title" type="text" required /></div>
       <div class="field"><label for="start-date-${number}">Start Date <span class="required">*</span></label><input id="start-date-${number}" name="experience_${number}_start_date" type="date" required /></div>
-      <div class="field"><label for="end-date-${number}">End Date <span class="required">*</span></label><input id="end-date-${number}" name="experience_${number}_end_date" type="date" required /></div>
-      <div class="field full-width"><label for="reason-leaving-${number}">Reason for Leaving <span class="required">*</span></label><input id="reason-leaving-${number}" name="experience_${number}_reason_for_leaving" type="text" required /></div>
+      <div class="field end-date-field">
+        <label for="end-date-${number}">End Date <span class="required">*</span></label>
+        <input id="end-date-${number}" name="experience_${number}_end_date" type="date" required />
+        <label class="checkbox-row current-employment-check" for="currently-employed-${number}">
+          <input id="currently-employed-${number}" name="experience_${number}_currently_employed" type="checkbox" class="currently-employed-checkbox" />
+          <span>I currently work here</span>
+        </label>
+        <span class="field-help current-employment-note is-hidden">End date will be recorded as <strong>Present</strong>.</span>
+      </div>
+      <div class="field full-width"><label for="reason-leaving-${number}">Reason for Leaving / Current Status <span class="required">*</span></label><input id="reason-leaving-${number}" name="experience_${number}_reason_for_leaving" type="text" required /><span class="field-help">If you still work here, check “I currently work here” above. This field will automatically show “Still employed here.”</span></div>
       <div class="field full-width"><label for="street-${number}">Business Street Address <span class="required">*</span></label><input id="street-${number}" name="experience_${number}_business_street_address" type="text" required /></div>
       <div class="field"><label for="city-${number}">City <span class="required">*</span></label><input id="city-${number}" name="experience_${number}_city" type="text" required /></div>
       <div class="field"><label for="state-${number}">State <span class="required">*</span></label><select id="state-${number}" name="experience_${number}_state" required><option value="">Select state</option></select></div>
@@ -204,12 +242,15 @@ function collectEmploymentHistory() {
     const number = card.dataset.experience;
     const value = (field) => form.elements[`experience_${number}_${field}`]?.value?.trim() || "";
 
+    const currentlyEmployed = Boolean(form.elements[`experience_${number}_currently_employed`]?.checked);
+
     return {
       business_name: value("business_name"),
       job_title: value("job_title"),
       start_date: value("start_date"),
-      end_date: value("end_date"),
-      reason_for_leaving: value("reason_for_leaving"),
+      end_date: currentlyEmployed ? todayIsoDate() : value("end_date"),
+      currently_employed: currentlyEmployed,
+      reason_for_leaving: currentlyEmployed ? "Still employed here" : value("reason_for_leaving"),
       business_street_address: value("business_street_address"),
       city: value("city"),
       state: value("state"),
@@ -367,6 +408,14 @@ addButton.addEventListener("click", () => {
   nextCard.scrollIntoView({ behavior: "smooth", block: "start" });
 });
 
+experienceList.addEventListener("change", (event) => {
+  const checkbox = event.target.closest(".currently-employed-checkbox");
+  if (!checkbox) return;
+
+  const card = checkbox.closest(".experience-card");
+  setCurrentEmploymentState(card, checkbox.checked);
+});
+
 experienceList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-remove]");
   if (!button) return;
@@ -415,6 +464,10 @@ identityDocumentInput.addEventListener("change", () => {
 });
 
 document.querySelectorAll('input[name$="_end_date"]').forEach(setEndDateMax);
+document.querySelectorAll(".experience-card").forEach((card) => {
+  const checkbox = card.querySelector(".currently-employed-checkbox");
+  setCurrentEmploymentState(card, Boolean(checkbox?.checked));
+});
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
